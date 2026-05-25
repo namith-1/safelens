@@ -1,0 +1,1874 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; script-src 'unsafe-inline';">
+<title>SafeLens AI</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+  
+  :root {
+    --bg-dark: #07090e;
+    --bg-panel: #0d111a;
+    --bg-dock: #040609;
+    --bg-card: rgba(20, 26, 38, 0.6);
+    --border: rgba(59, 130, 246, 0.15);
+    --border-hover: rgba(59, 130, 246, 0.3);
+    
+    --fg: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --accent-glow: rgba(88, 166, 255, 0.3);
+    
+    --err: #ff7b72;
+    --err-bg: rgba(240, 128, 128, 0.08);
+    --warn: #d29922;
+    --warn-bg: rgba(210, 153, 34, 0.08);
+    --info: #388bfd;
+    --info-bg: rgba(56, 139, 253, 0.08);
+    --ok: #3fb950;
+    --ok-bg: rgba(63, 185, 80, 0.08);
+    
+    --font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    --mono: 'JetBrains Mono', monospace;
+    --r: 8px;
+    --shadow: 0 8px 24px rgba(0,0,0,0.5);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; scrollbar-width: thin; scrollbar-color: var(--border) transparent; }
+  
+  body {
+    font-family: var(--font);
+    font-size: 13px;
+    color: var(--fg);
+    background: var(--bg-dark);
+    height: 100vh;
+    display: flex;
+    overflow: hidden;
+  }
+
+  ::-webkit-scrollbar { width: 4px; height: 4px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
+  ::-webkit-scrollbar-thumb:hover { background: var(--accent); }
+
+  /* ── SIDEBAR MASTER LAYOUT ── */
+  .layout {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  /* ── VERTICAL NAV DOCK ── */
+  .nav-dock {
+    width: 48px;
+    background: var(--bg-dock);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 12px 0;
+    gap: 16px;
+    flex-shrink: 0;
+  }
+  .dock-logo {
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+    margin-bottom: 8px;
+    filter: drop-shadow(0 0 4px var(--accent-glow));
+  }
+  .dock-items {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+    width: 100%;
+    align-items: center;
+  }
+  .dock-item {
+    width: 36px;
+    height: 36px;
+    border-radius: var(--r);
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    font-size: 18px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+  .dock-item:hover {
+    color: var(--fg);
+    background: rgba(255,255,255,0.05);
+  }
+  .dock-item.active {
+    color: var(--accent);
+    background: rgba(88, 166, 255, 0.1);
+    box-shadow: inset 0 0 0 1px var(--border);
+  }
+  .dock-footer {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.15);
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    transition: all 0.2s;
+  }
+  .dock-footer:hover {
+    color: var(--err);
+    border-color: var(--err);
+    background: var(--err-bg);
+  }
+
+  /* ── MAIN CONTENT AREA ── */
+  .main-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background: var(--bg-panel);
+    overflow: hidden;
+    position: relative;
+  }
+
+  .panel {
+    display: none;
+    flex: 1;
+    flex-direction: column;
+    overflow: hidden;
+    height: 100%;
+    animation: slideIn 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  }
+  @keyframes slideIn {
+    from { opacity: 0; transform: translateX(8px); }
+    to { opacity: 1; transform: translateX(0); }
+  }
+  .panel.active { display: flex; }
+  .scroll { overflow-y: auto; flex: 1; }
+
+  /* ── COMMAND STRIP (HEADER) ── */
+  .hdr {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--border);
+    background: rgba(13, 17, 26, 0.85);
+    backdrop-filter: blur(10px);
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+  .logo-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+  .logo-title {
+    font-size: 14px;
+    font-weight: 800;
+    letter-spacing: 0.5px;
+    background: linear-gradient(90deg, #58a6ff, #bc8cff);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+  .control-row {
+    display: flex;
+    gap: 6px;
+  }
+  .btn {
+    flex: 1;
+    padding: 6px 10px;
+    border-radius: var(--r);
+    border: none;
+    cursor: pointer;
+    font-size: 11px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+    transition: all 0.2s;
+  }
+  .btn:active { transform: scale(0.97); }
+  .bp {
+    background: linear-gradient(135deg, #388bfd, #79c0ff);
+    color: #ffffff;
+    box-shadow: 0 2px 6px rgba(56, 139, 253, 0.3);
+  }
+  .bp:hover { filter: brightness(1.1); }
+  .bs {
+    background: rgba(255,255,255,0.05);
+    color: var(--fg);
+    border: 1px solid var(--border);
+  }
+  .bs:hover { background: rgba(255,255,255,0.1); border-color: var(--border-hover); }
+
+  /* ── CARDS & METRICS ── */
+  .card {
+    margin: 12px 12px 0;
+    background: var(--bg-card);
+    border-radius: var(--r);
+    border: 1px solid var(--border);
+    padding: 12px 14px;
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(8px);
+  }
+  .card-t {
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.8px;
+    color: var(--muted);
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .card-b { font-size: 12px; line-height: 1.5; color: var(--fg); }
+  .card-b code { font-family: var(--mono); background: rgba(0,0,0,0.3); padding: 1px 4px; border-radius: 4px; font-size: 11px; }
+
+  /* Risk status banner */
+  .risk {
+    margin: 12px 12px 0;
+    border-radius: var(--r);
+    padding: 10px 12px;
+    border-left: 3px solid;
+    background: rgba(255,255,255,0.02);
+    box-shadow: var(--shadow);
+  }
+  .risk.CRITICAL { border-left-color: var(--err); background: var(--err-bg); }
+  .risk.HIGH { border-left-color: var(--warn); background: var(--warn-bg); }
+  .risk.MEDIUM { border-left-color: var(--info); background: var(--info-bg); }
+  .risk.LOW { border-left-color: var(--ok); background: var(--ok-bg); }
+  
+  .risk-lbl { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 2px; }
+  .risk.CRITICAL .risk-lbl { color: var(--err); }
+  .risk.HIGH .risk-lbl { color: var(--warn); }
+  .risk.MEDIUM .risk-lbl { color: var(--info); }
+  .risk.LOW .risk-lbl { color: var(--ok); }
+  .risk-line { font-size: 12px; font-weight: 500; }
+
+  .pills { display: flex; gap: 4px; flex-wrap: wrap; padding: 12px 12px 0; }
+  .pill { padding: 3px 8px; border-radius: 12px; font-size: 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; }
+  .pt { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid var(--border); }
+  .pe { background: var(--err-bg); color: var(--err); border: 1px solid rgba(255,123,114,0.25); cursor: pointer; }
+  .pw { background: var(--warn-bg); color: var(--warn); border: 1px solid rgba(210,153,34,0.25); cursor: pointer; }
+  .pi { background: var(--info-bg); color: var(--info); border: 1px solid rgba(56,139,253,0.25); cursor: pointer; }
+
+  .danger-card { margin: 12px 12px 0; background: var(--err-bg); border: 1px solid rgba(255,123,114,0.2); border-radius: var(--r); padding: 12px; }
+  .danger-t { font-size: 10px; font-weight: 800; text-transform: uppercase; tracking: 0.8px; color: var(--err); margin-bottom: 4px; }
+  .danger-rule { font-family: var(--mono); font-size: 11px; color: #ff7b72; margin-bottom: 6px; background: rgba(0,0,0,0.3); padding: 2px 6px; border-radius: 4px; display: inline-block; }
+  .danger-why { font-size: 12px; line-height: 1.5; }
+
+  .fix-card { margin: 12px 12px 16px; background: var(--ok-bg); border: 1px solid rgba(63,185,80,0.2); border-radius: var(--r); padding: 12px; }
+  .fix-list { list-style: none; display: flex; flex-direction: column; gap: 6px; }
+  .fix-list li { font-size: 12px; line-height: 1.4; display: flex; gap: 6px; align-items: flex-start; }
+  .fn { color: var(--ok); font-weight: 800; background: rgba(63,185,80,0.15); width: 18px; height: 18px; display: flex; align-items: center; justify-content: center; border-radius: 50%; font-size: 10px; flex-shrink: 0; }
+
+  /* ── MASTER-DETAIL SPLIT CONTAINER (THREAT FEED) ── */
+  .split-container {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+  .list-scroll {
+    flex: 1;
+    overflow-y: auto;
+    background: var(--bg-panel);
+    border-bottom: 1px solid transparent;
+  }
+
+  /* List Header */
+  .list-hdr {
+    padding: 10px 14px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+    background: rgba(13, 17, 26, 0.9);
+  }
+  .list-ttl { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px; }
+  .bdg { background: var(--accent); color: #fff; border-radius: 10px; padding: 1px 6px; font-size: 9px; font-weight: 700; }
+  .fsel { margin-left: auto; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: var(--fg); padding: 3px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; outline: none; }
+  
+  /* Finding List Items */
+  .fi {
+    padding: 10px 14px;
+    border-bottom: 1px solid rgba(255,255,255,0.03);
+    cursor: pointer;
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    background: transparent;
+  }
+  .fi:hover { background: rgba(255,255,255,0.02); }
+  .fi.sel { background: rgba(88, 166, 255, 0.05); border-left: 3px solid var(--accent); }
+  .fi.hi { background: rgba(255,255,255,0.03); border-left: 3px dotted var(--muted); }
+
+  .rn {
+    width: 20px;
+    height: 20px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 10px;
+    font-weight: 800;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+  .rn.ERROR { background: var(--err-bg); color: var(--err); border: 1px solid rgba(255,123,114,0.3); }
+  .rn.WARNING { background: var(--warn-bg); color: var(--warn); border: 1px solid rgba(210,153,34,0.3); }
+  .rn.INFO { background: var(--info-bg); color: var(--info); border: 1px solid rgba(56,139,253,0.3); }
+  .rn.UNKNOWN { background: rgba(255,255,255,0.05); color: var(--muted); }
+
+  .fb { flex: 1; min-width: 0; }
+  .fr { font-size: 11px; font-family: var(--mono); color: var(--accent); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
+  .fm { font-size: 12px; color: var(--fg); line-height: 1.4; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; margin-bottom: 4px; }
+  .fmeta { font-size: 10px; color: var(--muted); font-family: var(--mono); display: flex; gap: 8px; align-items: center; }
+  .stag { font-size: 9px; font-weight: 700; padding: 1px 4px; border-radius: 4px; text-transform: uppercase; }
+  .stag.ERROR { background: var(--err-bg); color: var(--err); }
+  .stag.WARNING { background: var(--warn-bg); color: var(--warn); }
+  .stag.INFO { background: var(--info-bg); color: var(--info); }
+  .stag.UNKNOWN { background: rgba(255,255,255,0.05); color: var(--muted); }
+
+  /* ── INSPECTOR DRAWER (SLIDES UP FROM BOTTOM OF FEED) ── */
+  .inspector-drawer {
+    background: #090d16;
+    height: 0;
+    transition: height 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    flex-shrink: 0;
+    position: relative;
+  }
+  .inspector-drawer.open {
+    height: 280px;
+    border-top: 1px solid var(--border);
+  }
+  .inspector-drawer.open.expanded {
+    height: 100% !important;
+  }
+  .drawer-resizer {
+    height: 5px;
+    background: transparent;
+    cursor: ns-resize;
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    z-index: 100;
+  }
+  .drawer-resizer:hover {
+    background: var(--accent);
+  }
+  .drawer-header {
+    padding: 8px 12px;
+    background: rgba(0,0,0,0.2);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+  .drawer-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--accent); }
+  .drawer-actions { display: flex; gap: 4px; }
+  .drawer-btn {
+    width: 20px;
+    height: 20px;
+    background: transparent;
+    border: none;
+    color: var(--muted);
+    cursor: pointer;
+    font-weight: bold;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 4px;
+    font-size: 11px;
+    transition: all 0.2s;
+  }
+  .drawer-btn:hover:not(:disabled) { background: rgba(255,255,255,0.05); color: var(--fg); }
+  .drawer-btn:disabled { opacity: 0.3; cursor: not-allowed; }
+  .drawer-btn.close-btn:hover { color: var(--err); background: var(--err-bg); }
+
+  .drawer-body { flex: 1; overflow-y: auto; padding: 12px; }
+  .empty-inspector { height: 100%; display: flex; align-items: center; justify-content: center; color: var(--muted); text-align: center; font-size: 12px; }
+
+  /* ── INSPECTOR DETAILS STYLING ── */
+  .prog-row { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; font-size: 11px; color: var(--muted); }
+  .prog-track { flex: 1; height: 4px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; }
+  .prog-fill { height: 100%; background: linear-gradient(90deg, #58a6ff, #bc8cff); transition: width 0.3s; }
+  
+  .det-rank { font-size: 10px; font-weight: 700; color: var(--muted); text-transform: uppercase; margin-bottom: 2px; }
+  .det-rule { font-family: var(--mono); font-size: 12px; color: var(--accent); margin-bottom: 6px; word-break: break-all; font-weight: 600; }
+  .det-sev { font-size: 10px; font-weight: 800; display: inline-flex; align-items: center; gap: 4px; padding: 2px 6px; border-radius: 4px; margin-bottom: 12px; }
+  .det-sev.ERROR { color: var(--err); background: var(--err-bg); border: 1px solid rgba(255,123,114,0.2); }
+  .det-sev.WARNING { color: var(--warn); background: var(--warn-bg); border: 1px solid rgba(210,153,34,0.2); }
+  .det-sev.INFO { color: var(--info); background: var(--info-bg); border: 1px solid rgba(56,139,253,0.2); }
+
+  .jbtn { display: inline-flex; align-items: center; gap: 4px; padding: 6px 10px; background: rgba(255,255,255,0.05); border: 1px solid var(--border); border-radius: 4px; cursor: pointer; font-size: 11px; font-weight: 600; color: var(--fg); font-family: var(--font); margin-bottom: 12px; transition: all 0.2s; }
+  .jbtn:hover { border-color: var(--accent); color: var(--accent); }
+
+  .sec { margin-bottom: 12px; background: rgba(255,255,255,0.02); padding: 10px; border-radius: 6px; border: 1px solid var(--border); }
+  .sec-t { font-size: 9px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); margin-bottom: 6px; }
+  .sec-b { font-size: 12px; line-height: 1.4; color: var(--fg); }
+  .sec-b code { font-family: var(--mono); background: rgba(0,0,0,0.3); padding: 1px 4px; border-radius: 4px; font-size: 11px; }
+  .sec-b pre { background: rgba(0,0,0,0.4); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 8px; overflow-x: auto; font-size: 11px; font-family: var(--mono); line-height: 1.4; margin-top: 6px; white-space: pre-wrap; }
+
+  .scen { background: var(--warn-bg); border: 1px solid rgba(210,153,34,0.15); border-radius: 6px; padding: 8px 10px; font-size: 12px; line-height: 1.4; }
+  .fix { background: var(--ok-bg); border: 1px solid rgba(63,185,80,0.15); border-radius: 6px; padding: 8px 10px; font-size: 12px; line-height: 1.4; }
+  .ref-a { color: var(--accent); font-size: 11px; display: block; margin-bottom: 4px; word-break: break-all; text-decoration: none; }
+  .ref-a:hover { text-decoration: underline; }
+  .det-actions { display: flex; gap: 6px; margin-top: 14px; }
+
+  /* ── RETRO HACKER CONSOLE (CHAT PANEL) ── */
+  .chat-layout {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    background: #040609;
+    font-family: var(--mono);
+  }
+  .console-hdr {
+    padding: 10px 14px;
+    background: #090c10;
+    border-bottom: 1px solid rgba(0, 210, 210, 0.15);
+    color: #00d2d3;
+    font-size: 11px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    letter-spacing: 0.5px;
+  }
+  .chat-msgs {
+    flex: 1;
+    overflow-y: auto;
+    padding: 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+  .cm {
+    font-size: 12px;
+    line-height: 1.5;
+    white-space: pre-wrap;
+    max-width: 100%;
+  }
+  .cm.user {
+    color: #e6edf3;
+  }
+  .cm.user::before {
+    content: "guest@safelens:~$ ";
+    color: #58a6ff;
+    font-weight: bold;
+  }
+  .cm.assistant {
+    color: #85e89d;
+    background: rgba(0, 210, 210, 0.02);
+    border-left: 2px solid #00d2d3;
+    padding-left: 8px;
+  }
+  .cm.assistant::before {
+    content: "safelens-ai:~$ ";
+    color: #00d2d3;
+    font-weight: bold;
+    display: block;
+    margin-bottom: 4px;
+  }
+  .cm.assistant code { font-family: var(--mono); background: rgba(255,255,255,0.06); padding: 1px 4px; border-radius: 4px; color: #ffab70; font-size: 11px; }
+  .cm.assistant pre { background: rgba(0,0,0,0.6); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; padding: 8px; font-family: var(--mono); font-size: 11px; overflow-x: auto; white-space: pre-wrap; margin-top: 6px; color: #fff; }
+  
+  .typing { display: flex; gap: 4px; align-items: center; color: #00d2d3; padding-left: 8px; }
+  .td { width: 5px; height: 5px; background: #00d2d3; border-radius: 50%; animation: pulse 1s infinite alternate; }
+  .td:nth-child(2) { animation-delay: 0.2s; }
+  .td:nth-child(3) { animation-delay: 0.4s; }
+  @keyframes pulse { from { opacity: 0.2; transform: scale(0.8); } to { opacity: 1; transform: scale(1.1); } }
+
+  .chat-inp-area {
+    border-top: 1px solid rgba(0, 210, 210, 0.15);
+    padding: 10px;
+    background: #090c10;
+  }
+  .ctx-badge {
+    font-size: 10px;
+    font-weight: 600;
+    color: #00d2d3;
+    margin-bottom: 6px;
+    padding: 2px 8px;
+    background: rgba(0, 210, 210, 0.05);
+    border-radius: 12px;
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid rgba(0, 210, 210, 0.2);
+  }
+  .chat-row { display: flex; gap: 8px; align-items: flex-end; }
+  .cinput {
+    flex: 1;
+    background: rgba(0,0,0,0.5);
+    border: 1px solid rgba(0, 210, 210, 0.2);
+    border-radius: 4px;
+    color: #85e89d;
+    padding: 8px;
+    font-family: var(--mono);
+    font-size: 12px;
+    resize: none;
+    max-height: 80px;
+    min-height: 34px;
+    outline: none;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.5);
+  }
+  .cinput:focus { border-color: #00d2d3; box-shadow: 0 0 5px rgba(0, 210, 210, 0.2), inset 0 2px 4px rgba(0,0,0,0.5); }
+  .cinput::placeholder { color: rgba(0, 210, 210, 0.35); }
+  .sbtn {
+    width: 34px;
+    height: 34px;
+    background: rgba(0, 210, 210, 0.1);
+    border: 1px solid rgba(0, 210, 210, 0.3);
+    border-radius: 4px;
+    color: #00d2d3;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+    transition: all 0.2s;
+  }
+  .sbtn:hover { background: rgba(0, 210, 210, 0.25); color: #fff; }
+
+  /* ── CHARTS RENDER CONTAINER ── */
+  .vp { padding: 4px 0 10px; }
+  .vt { font-size: 12px; font-weight: 800; margin-bottom: 12px; }
+  .vs { font-size: 9px; color: var(--muted); margin-bottom: 8px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.8px; margin-top: 14px; }
+  .dw { display: flex; align-items: center; gap: 16px; margin-bottom: 10px; background: rgba(0,0,0,0.2); padding: 10px; border-radius: 6px; }
+  .dl { display: flex; flex-direction: column; gap: 4px; }
+  .li { display: flex; align-items: center; gap: 6px; font-size: 11px; }
+  .ld { width: 10px; height: 10px; border-radius: 2px; flex-shrink: 0; }
+  
+  .br { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; font-size: 10px; }
+  .bl { width: 60px; text-align: right; color: var(--muted); flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-weight: 500; }
+  .bt { flex: 1; height: 8px; background: rgba(0,0,0,0.3); border-radius: 4px; overflow: hidden; border: 1px solid rgba(255,255,255,0.05); }
+  .bf { height: 100%; border-radius: 4px; transition: width .6s; }
+  .bc { width: 20px; color: var(--fg); text-align: right; font-weight: 600; }
+
+  .empty { padding: 30px 10px; text-align: center; color: var(--muted); display: flex; flex-direction: column; align-items: center; justify-content: center; }
+  .empty-i { font-size: 32px; margin-bottom: 8px; opacity: 0.7; }
+  .empty-t { font-size: 12px; line-height: 1.5; max-width: 220px; margin: 0 auto; }
+
+  .te { color: var(--err); } .mt8 { margin-top: 8px; } .mt10 { margin-top: 10px; } .fw { width: 100%; flex: none; }
+
+  /* ── LOGIN GATE ── */
+  @keyframes lockGlow {
+    0%, 100% { box-shadow: 0 0 16px rgba(56,139,253,0.15); }
+    50%       { box-shadow: 0 0 28px rgba(56,139,253,0.35); }
+  }
+  #chat-login-gate > div:first-child {
+    animation: lockGlow 3s ease-in-out infinite;
+  }
+  /* ensure chat-ui fills the flex parent */
+  #chat-ui { flex: 1; min-height: 0; }
+
+  /* ── TOAST ── */
+  #sl-toast {
+    position:fixed; bottom:16px; left:50%; transform:translateX(-50%) translateY(20px);
+    background:linear-gradient(135deg, #1a7a3a, #27a354); color:#fff;
+    font-size:11px; font-weight:600; padding:7px 16px; border-radius:20px;
+    box-shadow:0 4px 14px rgba(0,0,0,0.4); z-index:9999;
+    opacity:0; transition:opacity 0.3s, transform 0.3s; pointer-events:none;
+    white-space:nowrap;
+  }
+  #sl-toast.show { opacity:1; transform:translateX(-50%) translateY(0); }
+</style>
+
+</head>
+<body>
+<div id="sl-toast"></div>
+
+<!-- Sidebar Master Layout -->
+<div class="layout">
+  
+  <!-- Left Side Navigation Dock -->
+  <div class="nav-dock">
+    <div class="dock-logo">🛡️</div>
+    <div class="dock-items">
+      <button class="dock-item active" onclick="sw('overview')" id="dock-btn-overview" title="Dashboard">📊</button>
+      <button class="dock-item" onclick="sw('issues')" id="dock-btn-issues" title="Threat Feed">⚠️</button>
+      <button class="dock-item" onclick="sw('chat')" id="dock-btn-chat" title="AI Co-Pilot Console">💬</button>
+      <button class="dock-item" onclick="sw('regex')" id="dock-btn-regex" title="Custom Regex Rules">🔍</button>
+    </div>
+    <button class="dock-footer" onclick="vscode.postMessage({type:'clear'})" title="Clear All Markers">✕</button>
+  </div>
+
+  <!-- Right Side Main Content Panel -->
+  <div class="main-content">
+    
+    <!-- ══ DASHBOARD (OVERVIEW & ANALYTICS) ══ -->
+    <div class="panel active" id="panel-overview">
+      <div class="hdr">
+        <div class="logo-bar">
+          <span class="logo-title">SafeLens Command Center</span>
+        </div>
+        <div class="control-row">
+          <button class="btn bp" onclick="vscode.postMessage({type:'scanFile'})">📄 Scan File</button>
+          <button class="btn bs" onclick="vscode.postMessage({type:'scanFolder'})">📁 Scan Folder</button>
+        </div>
+      </div>
+      
+      <div class="scroll">
+        <div id="welcome" class="empty">
+          <div class="empty-i">🛡️</div>
+          <div class="empty-t">Run a scan on your files.<br>Vulnerabilities appear as code markers.<br>Select any finding to load the inspector.</div>
+        </div>
+        
+        <div id="ov-content" style="display:none">
+          <div id="risk-banner" class="risk HIGH" style="display:none">
+            <div class="risk-lbl" id="risk-lbl">HIGH RISK</div>
+            <div class="risk-line" id="risk-line"><span class="sp"></span>Analysing…</div>
+          </div>
+          
+          <div class="pills" id="pills"></div>
+          
+          <div class="card mt10" id="sum-card" style="display:none">
+            <div class="card-t">🤖 AI Security Summary</div>
+            <div class="card-b" id="sum-body"><span class="sp"></span>Generating…</div>
+          </div>
+          
+          <div class="danger-card" id="danger-card" style="display:none">
+            <div class="danger-t">🚨 Critical Hazard</div>
+            <div class="danger-rule" id="danger-rule"></div>
+            <div class="danger-why card-b" id="danger-why"></div>
+            <div class="mt8"><button class="btn bs" onclick="gotoDanger()">Inspect Vulnerability →</button></div>
+          </div>
+          
+          <div class="fix-card" id="fix-card" style="display:none">
+            <div class="card-t">✅ Recommended Fixes</div>
+            <ul class="fix-list" id="fix-list"></ul>
+          </div>
+          
+          <!-- Unified Charts Widget inside Dashboard! -->
+          <div class="card mt10" id="charts-card">
+            <div class="card-t">📈 Scan Analytics</div>
+            <div id="charts-body">
+              <div class="empty"><div class="empty-i">📊</div><div class="empty-t">Run a scan to load charts.</div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    
+    <!-- ══ THREAT FEED (MASTER-DETAIL SPLIT VIEW) ══ -->
+    <div class="panel" id="panel-issues">
+      <div class="split-container">
+        
+        <!-- List Header -->
+        <div class="list-hdr" style="flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px 14px; border-bottom: 1px solid var(--border);">
+          <div style="display:flex; align-items:center; gap:8px; width:100%;">
+            <span class="list-ttl">Vulnerabilities</span>
+            <span class="bdg" id="issues-bdg">0</span>
+            <select class="fsel" id="sev-sel" onchange="applyFilter()" style="margin-left:auto;">
+              <option value="ALL">All Items</option>
+              <option value="ERROR">Errors</option>
+              <option value="WARNING">Warnings</option>
+              <option value="INFO">Info</option>
+            </select>
+          </div>
+          <div style="display:flex; justify-content:space-between; align-items:center; width:100%; font-size:10px; margin-top:2px;">
+            <div style="display:flex; align-items:center; gap:6px; font-size:11px;">
+              <input type="checkbox" id="select-all-hdr" onclick="toggleSelectAllHeader(event)" style="cursor:pointer;">
+              <label for="select-all-hdr" style="cursor:pointer; font-weight:600; color:var(--muted);">Select All</label>
+            </div>
+            <button class="btn bp" style="padding:4px 10px; font-size:11px; background:linear-gradient(135deg, #3fb950, #56d364); line-height:1.2; box-shadow:none; flex:none; font-weight:bold; border-radius:4px;" onclick="showFixWindow()">🔧 Select & Fix</button>
+          </div>
+        </div>
+
+        <!-- Inline Tool Choices Panel (Select & Fix Overlay Window) -->
+        <div id="fix-window" style="display:none; border-bottom: 1px solid var(--border); background:rgba(63, 185, 80, 0.05); padding:10px 14px;">
+          <div style="font-size:10px; font-weight:800; text-transform:uppercase; color:var(--ok); margin-bottom:6px; letter-spacing:0.8px;">🔧 Select & Fix Tool</div>
+          <div style="margin-bottom:8px; font-size:11px; line-height:1.4; color:var(--fg);">Choose an AI tool to automatically resolve all checked vulnerabilities:</div>
+          <div style="display:flex; flex-direction:column; gap:8px; margin-bottom:12px;">
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:500; font-size:12px;">
+              <input type="radio" name="fix-tool" value="safelens" checked style="cursor:pointer;">
+              <span>🤖 SafeLens Co-Pilot (Integrated Console)</span>
+            </label>
+            <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:500; font-size:12px;">
+              <input type="radio" name="fix-tool" value="copilot" style="cursor:pointer;">
+              <span>🐱 VS Code Copilot Chat (GitHub Copilot)</span>
+            </label>
+          </div>
+          <div style="display:flex; gap:6px;">
+            <button class="btn bp" style="background:linear-gradient(135deg, #3fb950, #56d364); box-shadow: 0 2px 6px rgba(63,185,80,0.3); font-size:11px; padding:4px 10px;" onclick="executeFixTool()">Resolve Now</button>
+            <button class="btn bs" style="font-size:11px; padding:4px 10px;" onclick="hideFixWindow()">Cancel</button>
+          </div>
+        </div>
+        
+        <!-- Scrollable findings feed -->
+        <div class="list-scroll" id="issues-list-container">
+          <div id="issues-empty" class="empty">
+            <div class="empty-i">✅</div>
+            <div class="empty-t">No issues found. Go to Dashboard and scan a file.</div>
+          </div>
+          <div id="issues-list"></div>
+        </div>
+        
+        <!-- Sliding Inspector Drawer (Bottom Details Panel) -->
+        <div class="inspector-drawer" id="inspector-drawer">
+          <div class="drawer-resizer" id="drawer-resizer"></div>
+          <div class="drawer-header">
+            <span class="drawer-title">🔬 Vulnerability Inspector</span>
+            <div class="drawer-actions">
+              <button class="drawer-btn" id="prev-btn" onclick="nav(-1)" disabled>↑</button>
+              <button class="drawer-btn" id="next-btn" onclick="nav(1)">↓</button>
+              <button class="drawer-btn" id="expand-btn" onclick="toggleExpandInspector()" title="Maximize/Restore">⤢</button>
+              <button class="drawer-btn close-btn" onclick="closeInspector()" title="Close Inspector">✕</button>
+            </div>
+          </div>
+          <div class="drawer-body" id="det-content">
+            <div class="empty-inspector">Select a vulnerability from the feed list above to run deep inspection.</div>
+          </div>
+        </div>
+        
+      </div>
+    </div>
+    
+    <!-- ══ AI CO-PILOT TERMINAL (CHAT PANEL) ══ -->
+    <div class="panel" id="panel-chat">
+      <div class="chat-layout">
+        <div class="console-hdr">
+          <span>🖥️ SafeLens Co-Pilot Console v1.0.5</span>
+          <span id="chat-auth-badge" style="display:none; font-size:10px; color:#00d2d3; background:rgba(0,210,210,0.08); padding:2px 8px; border-radius:10px; border:1px solid rgba(0,210,210,0.2);">✓ Connected</span>
+        </div>
+        
+        <!-- Login Gate — shown when not authenticated -->
+        <div id="chat-login-gate" style="
+          flex:1; display:flex; flex-direction:column; align-items:center; justify-content:center;
+          padding:24px 20px; gap:16px; background:linear-gradient(180deg, #040609 0%, #0a0f1a 100%);
+        ">
+          <div style="
+            width:64px; height:64px; border-radius:50%;
+            background:linear-gradient(135deg, rgba(31,111,235,0.15), rgba(56,139,253,0.25));
+            border:1px solid rgba(56,139,253,0.3);
+            display:flex; align-items:center; justify-content:center; font-size:28px;
+            box-shadow:0 0 20px rgba(56,139,253,0.15);
+          ">🔐</div>
+
+          <div style="text-align:center;">
+            <div style="font-size:14px; font-weight:800; color:var(--fg); margin-bottom:6px; letter-spacing:0.3px;">
+              Login Required
+            </div>
+            <div style="font-size:12px; color:var(--muted); line-height:1.6; max-width:200px;">
+              The AI Co-Pilot is locked.<br>
+              Sign in to start chatting with<br>
+              <span style="color:#58a6ff; font-weight:600;">SafeLens AI</span>.
+            </div>
+          </div>
+
+          <div style="width:100%; display:flex; flex-direction:column; gap:8px; max-width:220px;">
+            <button onclick="vscode.postMessage({type:'openLoginPage'})" style="
+              width:100%; padding:9px 14px; border-radius:8px; border:none; cursor:pointer;
+              background:linear-gradient(135deg, #1f6feb, #388bfd);
+              color:#fff; font-size:12px; font-weight:700; letter-spacing:0.3px;
+              box-shadow:0 4px 12px rgba(31,111,235,0.4);
+              transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:6px;
+              font-family:var(--font);
+            " onmouseover="this.style.filter='brightness(1.15)'" onmouseout="this.style.filter=''">
+              🌐 Open Login Page
+            </button>
+            <button onclick="vscode.postMessage({type:'setApiKey'})" style="
+              width:100%; padding:7px 14px; border-radius:8px; cursor:pointer;
+              background:transparent; border:1px solid var(--border);
+              color:var(--fg); font-size:11px; font-weight:600;
+              transition:all 0.2s; display:flex; align-items:center; justify-content:center; gap:5px;
+              font-family:var(--font);
+            " onmouseover="this.style.borderColor='var(--accent)';this.style.color='var(--accent)'" onmouseout="this.style.borderColor='var(--border)';this.style.color='var(--fg)'">
+              🔑 Paste API Key directly
+            </button>
+            <div style="font-size:10px; color:var(--muted); text-align:center; line-height:1.5; margin-top:2px;">
+              Login to get your key, or paste<br>
+              a <span style="color:rgba(88,166,255,0.75); font-weight:600;">Groq Cloud key</span> (gsk_...) directly
+            </div>
+          </div>
+        </div>
+
+        <!-- Chat UI — shown when authenticated -->
+        <div id="chat-ui" style="flex:1; display:none; flex-direction:column; overflow:hidden;">
+          <div class="chat-msgs" id="chat-msgs">
+            <div class="cm assistant">Initialization completed. SafeLens shell active.
+Hover over a red squiggle in the editor or click "Inspect" in the feed to trigger AI analysis.
+Type queries or commands to inspect/fix your codebase.</div>
+          </div>
+          
+          <div class="chat-inp-area">
+            <div id="ctx-badge" class="ctx-badge" style="display:none"></div>
+            <div id="chat-input-row" class="chat-row">
+              <textarea class="cinput" id="cinput" placeholder="Type message or ask about threats…" rows="1" onkeydown="chatKey(event)" oninput="resize(this)"></textarea>
+              <button class="sbtn" onclick="sendChat()" title="Execute Command">➤</button>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+
+    <!-- ══ CUSTOM REGEX (REGULAR EXPRESSION RULES) ══ -->
+    <div class="panel" id="panel-regex">
+      <div class="hdr">
+        <div class="logo-bar">
+          <span class="logo-title">🔍 Custom Regex Rules</span>
+        </div>
+      </div>
+      
+      <div class="scroll" style="padding: 12px;">
+        <!-- Tab headers inside Regex panel -->
+        <div style="display:flex; gap:8px; border-bottom:1px solid var(--border); margin-bottom:12px; padding-bottom:6px;">
+          <button id="regex-tab-vul" class="btn bp" style="flex:1; padding:6px 4px; font-size:10px;" onclick="switchRegexTab('vul')">⚠️ Vulnerability</button>
+          <button id="regex-tab-ignore" class="btn bs" style="flex:1; padding:6px 4px; font-size:10px;" onclick="switchRegexTab('ignore')">☐ Ignore</button>
+          <button id="regex-tab-ai" class="btn bs" style="flex:1; padding:6px 4px; font-size:10px;" onclick="switchRegexTab('ai')">🤖 AI Generator</button>
+        </div>
+
+        <!-- Tab 1: New Vulnerability Regex Patterns -->
+        <div id="regex-sec-vul" style="display:block;">
+          <div style="font-size:11px; color:var(--muted); margin-bottom:10px; line-height:1.4;">
+            Define regular expressions to detect new custom vulnerability patterns in your codebase during scans.
+          </div>
+          
+          <div class="card" style="margin:0 0 12px 0; padding:10px; display:flex; flex-direction:column; gap:8px; background:rgba(0,0,0,0.2);">
+            <div style="font-size:10px; font-weight:800; text-transform:uppercase; color:var(--accent);">Add New Pattern</div>
+            <input type="text" id="vul-pat-name" placeholder="Rule Name (e.g. Hardcoded Creds)" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--fg); padding:5px; border-radius:4px; font-size:11px; outline:none;">
+            <input type="text" id="vul-pat-regex" placeholder="Regex Pattern (e.g. password\s*=\s*['\&quot;].*['\&quot;])" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--fg); padding:5px; border-radius:4px; font-family:var(--mono); font-size:11px; outline:none;">
+            <input type="text" id="vul-pat-msg" placeholder="Warning Message (e.g. Avoid hardcoded secrets)" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--fg); padding:5px; border-radius:4px; font-size:11px; outline:none;">
+            
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <select id="vul-pat-sev" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--fg); padding:4px 6px; border-radius:4px; font-size:11px; outline:none;">
+                <option value="WARNING">WARNING</option>
+                <option value="ERROR">ERROR</option>
+                <option value="INFO">INFO</option>
+              </select>
+              <button class="btn bp" style="padding:4px 12px; flex:none;" onclick="addVulRegex()">Add Rule</button>
+            </div>
+          </div>
+
+          <div style="font-size:10px; font-weight:800; text-transform:uppercase; margin-bottom:6px; color:var(--muted);">Active Vulnerability Rules</div>
+          <div id="vul-rules-list" style="display:flex; flex-direction:column; gap:6px;">
+            <div class="empty" style="padding:15px; font-size:11px;">No custom vulnerability rules defined.</div>
+          </div>
+        </div>
+
+        <!-- Tab 2: Ignore Regex Patterns -->
+        <div id="regex-sec-ignore" style="display:none;">
+          <div style="font-size:11px; color:var(--muted); margin-bottom:10px; line-height:1.4;">
+            Define regular expressions to suppress specific lines or findings from scan results.
+          </div>
+          
+          <div class="card" style="margin:0 0 12px 0; padding:10px; display:flex; flex-direction:column; gap:8px; background:rgba(0,0,0,0.2);">
+            <div style="font-size:10px; font-weight:800; text-transform:uppercase; color:var(--accent);">Add Ignore Pattern</div>
+            <input type="text" id="ignore-pat-name" placeholder="Ignore Rule Name (e.g. Test Mock Data)" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--fg); padding:5px; border-radius:4px; font-size:11px; outline:none;">
+            <input type="text" id="ignore-pat-regex" placeholder="Regex Pattern (e.g. mock_secret|TODO_IGNORE)" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--fg); padding:5px; border-radius:4px; font-family:var(--mono); font-size:11px; outline:none;">
+            <button class="btn bp" style="padding:4px 12px; align-self:flex-end; flex:none;" onclick="addIgnoreRegex()">Add Ignore Rule</button>
+          </div>
+
+          <div style="font-size:10px; font-weight:800; text-transform:uppercase; margin-bottom:6px; color:var(--muted);">Active Ignore Rules</div>
+          <div id="ignore-rules-list" style="display:flex; flex-direction:column; gap:6px;">
+            <div class="empty" style="padding:15px; font-size:11px;">No custom ignore rules defined.</div>
+          </div>
+        </div>
+
+        <!-- Tab 3: AI Regex Generator -->
+        <div id="regex-sec-ai" style="display:none;">
+          <div style="font-size:11px; color:var(--muted); margin-bottom:10px; line-height:1.4;">
+            Describe the security scenario or patterns you want to match/ignore, and the AI Co-Pilot will generate the regular expression for you.
+          </div>
+          
+          <div id="regex-ai-container">
+            <div class="card" style="margin:0 0 12px 0; padding:10px; display:flex; flex-direction:column; gap:8px; background:rgba(0,0,0,0.2);">
+              <div style="font-size:10px; font-weight:800; text-transform:uppercase; color:var(--accent);">AI Generator Prompt</div>
+              <textarea id="ai-regex-prompt" placeholder="Describe scenario: e.g. Match connection strings containing username and password in DB config" rows="3" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--fg); padding:6px; border-radius:4px; font-size:11px; outline:none; resize:none; font-family:var(--font);"></textarea>
+              
+              <div style="display:flex; justify-content:space-between; align-items:center;">
+                <select id="ai-regex-type" style="background:rgba(0,0,0,0.3); border:1px solid var(--border); color:var(--fg); padding:4px 6px; border-radius:4px; font-size:11px; outline:none;">
+                  <option value="vul">For Vulnerability Rule</option>
+                  <option value="ignore">For Ignore Rule</option>
+                </select>
+                <button id="ai-regex-btn" class="btn bp" style="padding:4px 12px; flex:none;" onclick="generateRegexWithAI()">Generate Regex</button>
+              </div>
+            </div>
+          </div>
+          <div id="regex-ai-login-block" style="display:none; padding:15px; text-align:center; background:rgba(0,0,0,0.2); border-radius:6px; border:1px dashed var(--border);">
+            <div style="font-size:11px; margin-bottom:10px; color:var(--muted);">🔐 AI Regex Generator requires an API Key / Sign-in.</div>
+            <button class="btn bp" style="width:100%; font-size:11px; padding:6px; background:linear-gradient(135deg, #1f6feb, #388bfd);" onclick="vscode.postMessage({type:'setApiKey'})">Set API Key</button>
+          </div>
+
+          <!-- AI Response Panel -->
+          <div id="ai-regex-response" class="card" style="display:none; margin:0; padding:10px; background:rgba(0,210,210,0.02); border-color:rgba(0,210,210,0.2);">
+            <div style="font-size:10px; font-weight:800; text-transform:uppercase; color:#00d2d3; margin-bottom:6px;">Generated Result</div>
+            <div style="display:flex; flex-direction:column; gap:8px;">
+              <div>
+                <span style="font-size:10px; color:var(--muted); font-weight:600;">REGEX PATTERN:</span>
+                <pre id="ai-res-regex" style="background:rgba(0,0,0,0.4); padding:6px; border-radius:4px; font-family:var(--mono); font-size:11px; margin-top:2px; color:#ffab70; white-space:pre-wrap; border:1px solid rgba(255,255,255,0.05);"></pre>
+              </div>
+              <div>
+                <span style="font-size:10px; color:var(--muted); font-weight:600;">EXPLANATION:</span>
+                <div id="ai-res-desc" style="font-size:11px; line-height:1.4; color:var(--fg); margin-top:2px;"></div>
+              </div>
+              <div style="display:flex; gap:6px; margin-top:4px;">
+                <button class="btn bp" style="background:linear-gradient(135deg, #3fb950, #56d364); font-size:11px; padding:4px 8px; flex:1;" onclick="applyGeneratedRegex()">Apply to Rules</button>
+                <button class="btn bs" style="font-size:11px; padding:4px 8px;" onclick="clearGeneratedRegex()">Clear</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    
+    <!-- Dummy panels to avoid reference errors from standard scripts -->
+    <div id="tab-detail" style="display:none"></div>
+    <div id="panel-detail" style="display:none"></div>
+    <div id="tab-charts" style="display:none"></div>
+    <div id="panel-charts" style="display:none"></div>
+
+  </div>
+</div>
+
+<script>
+var vscode = acquireVsCodeApi();
+var allFindings = [], filtered = [], selId = null, selIdx = 0;
+var expCache = {}, dangerousId = null, curFilter = 'ALL';
+var aiTimer = null; // timeout for "AI is taking longer than usual"
+var selectedFindingIds = {};
+
+// Fetch regexes on startup
+vscode.postMessage({ type: 'getRegexes' });
+
+// ── tab switch ──────────────────────────────────────────────────────────────
+function sw(name) {
+  // Update dock buttons active state
+  document.querySelectorAll('.dock-item').forEach(function(btn){ btn.classList.remove('active'); });
+  var cleanName = name === 'detail' ? 'issues' : (name === 'charts' ? 'overview' : name);
+  var activeBtn = document.getElementById('dock-btn-' + cleanName);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  // Update panels active state
+  document.querySelectorAll('.panel').forEach(function(p){ p.classList.remove('active'); });
+  
+  if (name === 'detail') {
+    document.getElementById('panel-issues').classList.add('active');
+    document.getElementById('inspector-drawer').classList.add('open');
+  } else {
+    var targetPanel = document.getElementById('panel-' + name);
+    if (targetPanel) {
+      targetPanel.classList.add('active');
+    } else if (name === 'charts') {
+      document.getElementById('panel-overview').classList.add('active');
+      // Scroll overview to charts widget
+      var cc = document.getElementById('charts-card');
+      if (cc) cc.scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+}
+
+var isInspectorExpanded = false;
+
+function toggleExpandInspector() {
+  var drawer = document.getElementById('inspector-drawer');
+  var btn = document.getElementById('expand-btn');
+  if (!isInspectorExpanded) {
+    drawer.classList.add('expanded');
+    btn.textContent = '⤡'; // restore symbol
+    btn.title = 'Restore Size';
+    isInspectorExpanded = true;
+  } else {
+    drawer.classList.remove('expanded');
+    btn.textContent = '⤢'; // maximize symbol
+    btn.title = 'Maximize';
+    isInspectorExpanded = false;
+  }
+}
+
+function closeInspector() {
+  var drawer = document.getElementById('inspector-drawer');
+  drawer.classList.remove('open');
+  drawer.classList.remove('expanded');
+  drawer.style.height = ''; // Reset inline height on close
+  isInspectorExpanded = false;
+  var btn = document.getElementById('expand-btn');
+  if (btn) {
+    btn.textContent = '⤢';
+    btn.title = 'Maximize';
+  }
+  // Clear selection highlighting
+  document.querySelectorAll('.fi').forEach(function(el){ el.classList.remove('sel'); });
+}
+
+// Drag to resize Inspector Drawer
+setTimeout(function() {
+  var resizer = document.getElementById('drawer-resizer');
+  var drawer = document.getElementById('inspector-drawer');
+  if (resizer && drawer) {
+    resizer.addEventListener('mousedown', function(e) {
+      if (isInspectorExpanded) return; // Disable drag resize when maximized
+      startY = e.clientY;
+      startHeight = drawer.offsetHeight;
+      document.addEventListener('mousemove', doDrag);
+      document.addEventListener('mouseup', stopDrag);
+      drawer.style.transition = 'none'; // Disable transition during drag for smoothness
+    });
+  }
+  
+  function doDrag(e) {
+    var deltaY = startY - e.clientY;
+    var newHeight = startHeight + deltaY;
+    // Set boundaries (min 100px, max window height minus 60px)
+    if (newHeight >= 100 && newHeight <= window.innerHeight - 60) {
+      drawer.style.height = newHeight + 'px';
+    }
+  }
+
+  function stopDrag(e) {
+    document.removeEventListener('mousemove', doDrag);
+    document.removeEventListener('mouseup', stopDrag);
+    drawer.style.transition = 'height 0.3s cubic-bezier(0.4, 0, 0.2, 1)';
+  }
+}, 100);
+
+// ── messages from extension ─────────────────────────────────────────────────
+
+var _toastTimer = null;
+function showToast(msg) {
+  var t = document.getElementById('sl-toast');
+  if (!t) return;
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(_toastTimer);
+  _toastTimer = setTimeout(function(){ t.classList.remove('show'); }, 3000);
+}
+
+var isUserLoggedIn = false;
+function updateAuthState(loggedIn) {
+  isUserLoggedIn = !!loggedIn;
+
+  // Chat panel
+  var loginGate   = document.getElementById('chat-login-gate');
+  var chatUi      = document.getElementById('chat-ui');
+  var authBadge   = document.getElementById('chat-auth-badge');
+
+  // Regex AI panel
+  var regexAiContainer = document.getElementById('regex-ai-container');
+  var regexAiLoginBlock = document.getElementById('regex-ai-login-block');
+
+  if (loggedIn) {
+    // Show full chat UI, hide login gate
+    if (loginGate)  loginGate.style.display  = 'none';
+    if (chatUi)     { chatUi.style.display = 'flex'; }
+    if (authBadge)  authBadge.style.display  = 'inline-flex';
+
+    // Regex AI unlocked
+    if (regexAiContainer)  regexAiContainer.style.display  = 'block';
+    if (regexAiLoginBlock) regexAiLoginBlock.style.display  = 'none';
+  } else {
+    // Show login gate, hide chat UI
+    if (loginGate)  loginGate.style.display  = 'flex';
+    if (chatUi)     chatUi.style.display     = 'none';
+    if (authBadge)  authBadge.style.display  = 'none';
+
+    // Regex AI locked
+    if (regexAiContainer)  regexAiContainer.style.display  = 'none';
+    if (regexAiLoginBlock) regexAiLoginBlock.style.display  = 'block';
+  }
+}
+
+
+window.addEventListener('message', function(e) {
+  var m = e.data;
+  switch(m.type) {
+    case 'authState':
+      updateAuthState(m.payload.loggedIn);
+      break;
+
+    case 'toast':
+      showToast(m.payload);
+      break;
+
+    case 'sendRegexes':
+      customVuls = m.payload.customVuls || [];
+      customIgnores = m.payload.customIgnores || [];
+      renderRegexRules();
+      break;
+
+    case 'regexGenerated':
+      var btn = document.getElementById('ai-regex-btn');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Generate Regex';
+      }
+      lastGeneratedRegex = m.payload;
+      document.getElementById('ai-res-regex').textContent = m.payload.regex;
+      document.getElementById('ai-res-desc').textContent = m.payload.description;
+      document.getElementById('ai-regex-response').style.display = 'block';
+      break;
+
+    case 'regexGeneratedError':
+      var btn = document.getElementById('ai-regex-btn');
+      if (btn) {
+        btn.disabled = false;
+        btn.textContent = 'Generate Regex';
+      }
+      alert('Error generating regex via AI: ' + m.payload);
+      break;
+
+    case 'scanLoading':
+      var target = m.payload.path;
+      var displayPath = target.split(/[\/\\]/).slice(-3).join('/'); 
+      document.getElementById('welcome').style.display = 'none';
+      document.getElementById('ov-content').style.display = 'block';
+      document.getElementById('risk-banner').style.display = 'block';
+      document.getElementById('risk-lbl').textContent = 'SCAN IN PROGRESS';
+      document.getElementById('risk-banner').className = 'risk INFO';
+      document.getElementById('risk-line').innerHTML = '<span class="sp"></span>Scanning ' + (m.payload.type === 'file' ? 'file' : 'directory') + ': <strong style="font-family:var(--mono);">' + esc(displayPath) + '</strong>';
+      document.getElementById('sum-card').style.display = 'none';
+      document.getElementById('danger-card').style.display = 'none';
+      document.getElementById('fix-card').style.display = 'none';
+      break;
+
+    case 'runtimeCrash':
+      var crash = m.payload;
+      var originFile = crash.origin.file.split(/[\/\\]/).pop() || crash.origin.file;
+      
+      var html = '<div class="det-rank">Runtime Crash Intercepted</div>'
+        + '<div class="det-rule">' + esc(crash.errorType) + '</div>'
+        + '<div class="det-sev ERROR">💥 CRASH POINT</div>'
+        + '<button class="jbtn" onclick="jumpToCrash(\'' + esc(crash.origin.file.replace(/\\/g, '\\\\')) + '\', ' + crash.origin.line + ')">📍 Jump to source (Line ' + crash.origin.line + ')</button>'
+        + '<div class="sec"><div class="sec-t">Error Message</div><div class="sec-b" style="color:var(--err); font-weight:bold; word-break:break-all;">' + esc(crash.message) + '</div></div>'
+        + '<div class="sec"><div class="sec-t">⛓️ Call Stack Propagation</div><div class="sec-b" style="font-family:var(--mono); font-size:11px; max-height:100px; overflow-y:auto; padding:4px 0;">'
+        + '<div style="color:var(--err); margin-bottom:4px;">💥 ' + esc(originFile) + ':' + crash.origin.line + ' (' + esc(crash.origin.functionName) + ')</div>';
+        
+      if (crash.propagation && crash.propagation.length > 0) {
+        crash.propagation.forEach(function(f) {
+          var fName = f.file.split(/[\/\\]/).pop() || f.file;
+          html += '<div style="color:var(--muted); padding-left:8px;">└── 📄 ' + esc(fName) + ':' + f.line + ' (' + esc(f.functionName) + ')</div>';
+        });
+      }
+      html += '</div></div>'
+        + '<div class="det-actions">'
+        + '<button class="btn bs" onclick="askChat(\'this runtime crash: ' + esc(crash.errorType) + ': ' + esc(crash.message).replace(/'/g, "\\'") + '\')">💬 Ask Co-Pilot</button>'
+        + '<button class="btn bp" onclick="closeInspector()">✕ Close</button>'
+        + '</div>';
+
+      document.getElementById('det-content').innerHTML = html;
+      document.getElementById('inspector-drawer').classList.add('open');
+      sw('issues'); 
+      break;
+
+
+    case 'scanResult':
+      allFindings = m.payload.findings || [];
+      selectedFindingIds = {};
+      var rank = {ERROR:0,WARNING:1,INFO:2,UNKNOWN:3};
+      allFindings.sort(function(a,b){ return (rank[a.severity]||3)-(rank[b.severity]||3); });
+
+      applyFilter();
+      renderCharts(m.payload);
+      updateBadge();
+      document.getElementById('welcome').style.display = 'none';
+      document.getElementById('ov-content').style.display = 'block';
+      document.getElementById('risk-banner').style.display = 'block';
+      document.getElementById('sum-card').style.display = 'block';
+      renderPills();
+      closeInspector();
+      sw('issues');
+      break;
+
+    case 'summaryLoading': break; 
+
+    case 'summaryStructured': renderStructured(m.payload); break;
+    case 'summary':
+      document.getElementById('sum-body').innerHTML = md(m.payload);
+      document.getElementById('risk-banner').style.display = 'none';
+      break;
+    case 'summaryError':
+      document.getElementById('sum-body').innerHTML = '<span class="te">'+esc(m.payload)+'</span>';
+      document.getElementById('risk-banner').style.display = 'none';
+      break;
+
+    case 'openFinding':
+      openDetail(m.payload);
+      break;
+
+    case 'highlightFinding':
+      highlightInList(m.payload);
+      break;
+
+    case 'explanationLoading':
+      showDetLoading(m.payload);
+      break;
+
+    case 'explanation':
+      if(aiTimer){ clearTimeout(aiTimer); aiTimer=null; }
+      expCache[m.payload.findingId] = m.payload.explanation;
+      if(selId === m.payload.findingId) { renderDetailContent(m.payload.findingId); }
+      break;
+
+    case 'explanationError':
+      if(aiTimer){ clearTimeout(aiTimer); aiTimer=null; }
+      var dc = document.getElementById('det-content');
+      if(dc) dc.innerHTML += '<p class="te mt8">'+esc(m.payload)+'</p>';
+      break;
+
+    case 'chatMessage':
+      removeTyping();
+      addMsg(m.payload);
+      break;
+    case 'chatTyping': showTyping(); break;
+    case 'chatError':
+      removeTyping();
+      addMsg({role:'assistant',content:'❌ '+m.payload,timestamp:Date.now()});
+      break;
+
+    case 'error':
+      document.getElementById('welcome').style.display='none';
+      document.getElementById('ov-content').style.display='block';
+      document.getElementById('sum-card').style.display='block';
+      document.getElementById('sum-body').innerHTML='<span class="te">'+esc(m.payload)+'</span>';
+      break;
+
+    case 'cleared':
+      allFindings=[]; filtered=[]; selId=null; dangerousId=null; expCache={}; selectedFindingIds={};
+      if(aiTimer){clearTimeout(aiTimer);aiTimer=null;}
+      document.getElementById('welcome').style.display='block';
+      document.getElementById('ov-content').style.display='none';
+      document.getElementById('issues-list').innerHTML='';
+      document.getElementById('issues-empty').style.display='block';
+      document.getElementById('charts-body').innerHTML='<div class="empty"><div class="empty-i">📊</div><div class="empty-t">Run a scan to load charts.</div></div>';
+      closeInspector();
+      updateBadge(); renderPills();
+      sw('overview');
+      break;
+  }
+});
+
+// ── structured AI overview ──────────────────────────────────────────────────
+function renderStructured(d) {
+  var lvl = d.overallRisk || 'HIGH';
+  var ban = document.getElementById('risk-banner');
+  ban.className = 'risk '+lvl;
+  document.getElementById('risk-lbl').textContent = lvl+' RISK';
+  document.getElementById('risk-line').textContent = d.oneLiner || '';
+  document.getElementById('sum-body').innerHTML = md(d.summary || '');
+  if(d.mostDangerous && d.mostDangerous.ruleId) {
+    var mf = allFindings.find(function(f){return f.ruleId===d.mostDangerous.ruleId;}) || allFindings[0];
+    if(mf) {
+      dangerousId = mf.id;
+      document.getElementById('danger-rule').textContent = d.mostDangerous.ruleId;
+      document.getElementById('danger-why').innerHTML = md(d.mostDangerous.why||'');
+      document.getElementById('danger-card').style.display = 'block';
+    }
+  }
+  if(d.topThreeFixes && d.topThreeFixes.length) {
+    document.getElementById('fix-list').innerHTML = d.topThreeFixes.map(function(f,i){
+      return '<li><span class="fn">'+(i+1)+'.</span><span>'+md(f)+'</span></li>';
+    }).join('');
+    document.getElementById('fix-card').style.display = 'block';
+  }
+}
+function gotoDanger() { if(dangerousId) openDetail(dangerousId); }
+
+// ── pills ───────────────────────────────────────────────────────────────────
+function renderPills() {
+  var c={ERROR:0,WARNING:0,INFO:0};
+  allFindings.forEach(function(f){if(c[f.severity]!==undefined)c[f.severity]++;});
+  var h='<span class="pill pt">📊 '+allFindings.length+' total</span>';
+  if(c.ERROR)   h+='<span class="pill pe" onclick="filterTo(\'ERROR\')">🔴 '+c.ERROR+' Errors</span>';
+  if(c.WARNING) h+='<span class="pill pw" onclick="filterTo(\'WARNING\')">🟡 '+c.WARNING+' Warns</span>';
+  if(c.INFO)    h+='<span class="pill pi" onclick="filterTo(\'INFO\')">🔵 '+c.INFO+' Info</span>';
+  document.getElementById('pills').innerHTML = h;
+}
+function filterTo(s){curFilter=s;document.getElementById('sev-sel').value=s;applyFilter();sw('issues');}
+
+// ── issues list ─────────────────────────────────────────────────────────────
+function applyFilter() {
+  curFilter = document.getElementById('sev-sel') ? document.getElementById('sev-sel').value : 'ALL';
+  filtered = curFilter==='ALL' ? allFindings : allFindings.filter(function(f){return f.severity===curFilter;});
+  renderList();
+  updateBadge();
+}
+
+function toggleCheck(e, id) {
+  e.stopPropagation();
+  selectedFindingIds[id] = e.target.checked;
+  updateBadge();
+}
+
+function toggleSelectAllHeader(e) {
+  var checked = e.target.checked;
+  filtered.forEach(function(f) {
+    selectedFindingIds[f.id] = checked;
+  });
+  renderList();
+  updateBadge();
+}
+
+function renderList() {
+  var el = document.getElementById('issues-list');
+  var em = document.getElementById('issues-empty');
+  if(!filtered.length){el.innerHTML='';em.style.display='block';return;}
+  em.style.display='none';
+  el.innerHTML = filtered.map(function(f,i){
+    var fp = f.file.split(/[\/\\]/).pop()||f.file;
+    var isSel = f.id===selId?' sel':'';
+    var isChecked = selectedFindingIds[f.id] === true ? 'checked' : '';
+    return '<div class="fi'+isSel+'" data-id="'+esc(f.id)+'" onclick="clickFinding(\''+esc(f.id)+'\')">'
+      +'<input type="checkbox" '+isChecked+' onclick="toggleCheck(event, \''+esc(f.id)+'\')" style="cursor:pointer; margin-top:4px; margin-right:4px; flex-shrink:0;">'
+      +'<div class="rn '+esc(f.severity)+'">'+(i+1)+'</div>'
+      +'<div class="fb">'
+      +'<div class="fr">'+esc(shortRule(f.ruleId))+'</div>'
+      +'<div class="fm">'+esc(f.message)+'</div>'
+      +'<div class="fmeta"><span class="stag '+esc(f.severity)+'">'+esc(f.severity)+'</span>'
+      +'<span>'+esc(fp)+':'+f.line.start+'</span></div>'
+      +'</div></div>';
+  }).join('');
+}
+
+function updateBadge() {
+  var total = filtered.length;
+  var checked = 0;
+  filtered.forEach(function(f) {
+    if (selectedFindingIds[f.id] === true) checked++;
+  });
+  document.getElementById('issues-bdg').textContent = checked + '/' + total;
+
+  var selectAllBox = document.getElementById('select-all-hdr');
+  if (selectAllBox) {
+    selectAllBox.checked = total > 0 && checked === total;
+  }
+}
+
+function highlightInList(id) {
+  document.querySelectorAll('.fi').forEach(function(el){el.classList.remove('hi');});
+  var el = document.querySelector('[data-id="'+id+'"]');
+  if(el) el.classList.add('hi');
+}
+
+function shortRule(r){var p=r.split('.');return p.length>2?p.slice(-2).join('.'):r;}
+
+// ── open detail (called from hover click OR list click) ─────────────────────
+function clickFinding(id) {
+  selId = id;
+  selIdx = filtered.findIndex(function(f){return f.id===id;});
+  renderList(); 
+  document.getElementById('inspector-drawer').classList.add('open');
+  updateNavBtns();
+  updateCtxBadge(id);
+  if(expCache[id]) {
+    renderDetailContent(id);
+  } else {
+    showDetLoading(id);
+    vscode.postMessage({type:'selectFinding',payload:id});
+  }
+}
+
+function openDetail(id) {
+  selId = id;
+  selIdx = filtered.findIndex(function(f){return f.id===id;});
+  if(selIdx<0){filtered=allFindings;selIdx=allFindings.findIndex(function(f){return f.id===id;});renderList();}
+  sw('detail');
+  updateNavBtns();
+  updateCtxBadge(id);
+  if(expCache[id]) {
+    renderDetailContent(id);
+  } else {
+    showDetLoading(id);
+  }
+}
+
+function nav(dir) {
+  var ni = selIdx+dir;
+  if(ni<0||ni>=filtered.length)return;
+  clickFinding(filtered[ni].id);
+  
+  // Center item in list scroll
+  var itemEl = document.querySelector('[data-id="'+filtered[ni].id+'"]');
+  if (itemEl) itemEl.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function updateNavBtns() {
+  document.getElementById('prev-btn').disabled = selIdx<=0;
+  document.getElementById('next-btn').disabled = selIdx>=filtered.length-1;
+}
+
+function updateCtxBadge(id) {
+  var f=allFindings.find(function(x){return x.id===id;});
+  if(f){var b=document.getElementById('ctx-badge');b.style.display='inline-flex';b.textContent='📎 Finding: '+shortRule(f.ruleId);}
+}
+
+// ── detail rendering ────────────────────────────────────────────────────────
+function showDetLoading(id) {
+  renderDetailContent(id);
+  if(aiTimer) clearTimeout(aiTimer);
+  aiTimer = setTimeout(function(){
+    var el = document.getElementById('ai-msg');
+    if(el) el.textContent = ' AI is taking longer than usual. Still waiting…';
+  }, 12000);
+}
+
+function showFixWindow() {
+  document.getElementById('fix-window').style.display = 'block';
+  document.getElementById('fix-window').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+}
+
+function hideFixWindow() {
+  document.getElementById('fix-window').style.display = 'none';
+}
+
+function executeFixTool() {
+  var radios = document.getElementsByName('fix-tool');
+  var tool = 'safelens';
+  for (var i = 0; i < radios.length; i++) {
+    if (radios[i].checked) {
+      tool = radios[i].value;
+      break;
+    }
+  }
+
+  // Get checked findings
+  var checkedIds = [];
+  filtered.forEach(function(f) {
+    if (selectedFindingIds[f.id] === true) {
+      checkedIds.push(f.id);
+    }
+  });
+
+  if (checkedIds.length === 0) {
+    alert('Please select at least one vulnerability using the checkboxes!');
+    return;
+  }
+
+  var prompt = '';
+  if (checkedIds.length === 1) {
+    var f = allFindings.find(function(x){ return x.id === checkedIds[0]; });
+    prompt = 'Fix the security vulnerability: "' + f.ruleId + '" - "' + f.message.replace(/'/g, "\\'") + '" in this code:\n\n```\n' + (f.codeSnippet || '') + '\n```\nProvide only the corrected code and explanation.';
+  } else {
+    prompt = 'Fix the following security vulnerabilities in the codebase:\n\n';
+    checkedIds.forEach(function(id, idx) {
+      var f = allFindings.find(function(x){ return x.id === id; });
+      prompt += (idx + 1) + '. **' + f.ruleId + '** in file `' + f.file.split(/[\/\\]/).pop() + '` line ' + f.line.start + ':\n';
+      prompt += '   Warning: ' + f.message + '\n';
+      if (f.codeSnippet) {
+        prompt += '   Code:\n   ```\n   ' + f.codeSnippet.replace(/\n/g, '\n   ') + '\n   ```\n';
+      }
+      prompt += '\n';
+    });
+    prompt += 'Provide the corrected code blocks and brief explanations for each.';
+  }
+
+  if (tool === 'safelens') {
+    sw('chat');
+    document.getElementById('cinput').value = prompt;
+    sendChat();
+  } else if (tool === 'copilot') {
+    navigator.clipboard.writeText(prompt).then(function() {
+      vscode.postMessage({
+        type: 'triggerCopilot',
+        payload: { prompt: prompt }
+      });
+    }).catch(function() {
+      vscode.postMessage({
+        type: 'triggerCopilot',
+        payload: { prompt: prompt }
+      });
+    });
+  }
+
+  hideFixWindow();
+}
+
+function toggleMarkCurrent(id) {
+  var isChecked = selectedFindingIds[id] === true;
+  selectedFindingIds[id] = !isChecked;
+  
+  renderList();
+  updateBadge();
+  
+  var btn = document.getElementById('mark-btn');
+  if (btn) {
+    var nowChecked = !isChecked;
+    btn.textContent = nowChecked ? '☐ Unmark' : '☑ Mark for Fix';
+    btn.style.cssText = nowChecked ? 'margin-bottom:0; flex:1; color:var(--muted);' : 'margin-bottom:0; flex:1; background:var(--ok-bg); border-color:var(--ok); color:var(--ok);';
+  }
+}
+
+function fixThisWarning(id) {
+  var f = allFindings.find(function(x){ return x.id === id; });
+  if (!f) return;
+  
+  var prompt = 'Fix the security vulnerability: "' + f.ruleId + '" - "' + f.message.replace(/'/g, "\\'") + '" in this code:\n\n```\n' + (f.codeSnippet || '') + '\n```\nProvide only the corrected code and explanation.';
+  
+  sw('chat');
+  document.getElementById('cinput').value = prompt;
+  sendChat();
+}
+
+function renderDetailContent(id) {
+  var f=allFindings.find(function(x){return x.id===id;});
+  var exp=expCache[id];
+  if(!f)return;
+  var rank=(filtered.findIndex(function(x){return x.id===id;})+1)||'?';
+  var tot=filtered.length||allFindings.length;
+  var pct=Math.round((rank/tot)*100);
+
+  var semgrepHTML = '<div class="sec"><div class="sec-t">Description</div><div class="sec-b">' + esc(f.message) + '</div></div>'
+    + (f.codeSnippet ? '<div class="sec"><div class="sec-t">Vulnerable Source</div><div class="sec-b"><pre>' + esc(f.codeSnippet) + '</pre></div></div>' : '')
+    + (f.fix ? '<div class="sec" style="background:var(--ok-bg); border-color:var(--ok);"><div class="sec-t" style="color:var(--ok)">💡 Semgrep Suggested Autofix</div><div class="sec-b"><pre>' + esc(f.fix) + '</pre></div></div>' : '');
+
+  var expHTML = '';
+  if (exp) {
+    var refs = '';
+    if (exp.references && exp.references.length) {
+      refs = '<div class="sec"><div class="sec-t">🔗 Reference URLs</div><div class="sec-b">'
+        + exp.references.map(function(r){ return '<a class="ref-a" href="' + esc(r) + '">' + esc(r) + '</a>'; }).join('')
+        + '</div></div>';
+    }
+    expHTML =
+      '<div class="sec"><div class="sec-t">📖 AI Analysis Detail</div><div class="sec-b">' + md(exp.detail) + '</div></div>'
+      + '<div class="sec"><div class="sec-t">🌍 Attack Path Scenario</div><div class="scen">' + md(exp.realWorldScenario) + '</div></div>'
+      + '<div class="sec"><div class="sec-t">🔧 Recommended Fix Remediation</div><div class="fix">' + md(exp.howToFix) + '</div></div>'
+      + refs;
+  } else {
+    expHTML = '<div id="ai-status"><span class="sp"></span><span style="color:var(--muted)" id="ai-msg"> AI is inspecting finding...</span></div>';
+  }
+
+  var isChecked = selectedFindingIds[f.id] !== false;
+  var markText = isChecked ? '☐ Unmark' : '☑ Mark for Fix';
+  var markStyle = isChecked ? 'color:var(--muted);' : 'margin-bottom:0; flex:1; background:var(--ok-bg); border-color:var(--ok); color:var(--ok);';
+
+  document.getElementById('det-content').innerHTML =
+    prog(rank,tot,pct)
+    +'<div class="det-rank">Threat Severity Rank #'+rank+'</div>'
+    +'<div class="det-rule">'+esc(f.ruleId)+'</div>'
+    +'<div class="det-sev '+esc(f.severity)+'">'+sIcon(f.severity)+' '+esc(f.severity)+'</div>'
+    +'<div style="display:flex; gap:6px; margin-bottom:12px;">'
+      +'<button class="jbtn" style="margin-bottom:0; flex:1;" onclick="vscode.postMessage({type:\'jumpToFinding\',payload:\''+esc(f.id)+'\'})">📍 Jump to line '+f.line.start+'</button>'
+      +'<button class="jbtn" id="mark-btn" style="margin-bottom:0; flex:1; ' + markStyle + '" onclick="toggleMarkCurrent(\''+esc(f.id)+'\')">' + markText + '</button>'
+    +'</div>'
+    +semgrepHTML
+    +expHTML
+    +'<div class="det-actions">'
+    +'<button class="btn bp" style="background:linear-gradient(135deg, #3fb950, #56d364); flex:1; font-weight:bold;" onclick="fixThisWarning(\''+esc(f.id)+'\')">⚡ Fix This</button>'
+    +'<button class="btn bs" onclick="askChat(\''+esc(f.ruleId)+'\')">💬 Ask Co-Pilot</button>'
+    +(selIdx<filtered.length-1
+      ?'<button class="btn bs" onclick="nav(1)">Next ↓</button>'
+      :'<button class="btn bs" onclick="closeInspector()">✓ Done</button>')
+    +'</div>';
+}
+
+function prog(rank,tot,pct){
+  return '<div class="prog-row"><span>Threat '+rank+' of '+tot+'</span>'
+    +'<div class="prog-track"><div class="prog-fill" style="width:'+pct+'%"></div></div></div>';
+}
+function askChat(r){sw('chat');document.getElementById('cinput').value='Explain ' + r + ' and show me an attack example and fix.';document.getElementById('cinput').focus();}
+
+// ── charts ──────────────────────────────────────────────────────────────────
+function renderCharts(result) {
+  var sev=(result.summary&&result.summary.bySeverity)||{};
+  var total=result.summary?result.summary.totalFindings:0;
+  var byFile=result.findingsByFile||{};
+  var findings=result.findings||[];
+  if(!total){document.getElementById('charts-body').innerHTML='<div class="empty"><div class="empty-i">✅</div><div class="empty-t">No issues found.</div></div>';return;}
+
+  var donut=buildDonut([{v:sev.ERROR||0,c:'#ff7b72'},{v:sev.WARNING||0,c:'#d29922'},{v:sev.INFO||0,c:'#388bfd'},{v:sev.UNKNOWN||0,c:'#8b949e'}],total);
+
+  var fe=Object.entries(byFile).sort(function(a,b){return b[1].length-a[1].length;}).slice(0,8);
+  var mf=fe.length?fe[0][1].length:1;
+  var fBars=fe.map(function(e){
+    var fp=e[0];var ff=e[1];var name=fp.split(/[\/\\]/).pop()||fp;
+    var pct=Math.round((ff.length/mf)*100);
+    var col=ff.some(function(f){return f.severity==='ERROR';})?'#ff7b72':ff.some(function(f){return f.severity==='WARNING';})?'#d29922':'#388bfd';
+    return '<div class="br"><div class="bl" title="'+esc(fp)+'">'+esc(name.slice(0,8))+'</div><div class="bt"><div class="bf" style="width:'+pct+'%;background:'+col+';"></div></div><div class="bc">'+ff.length+'</div></div>';
+  }).join('');
+
+  var rc={};findings.forEach(function(f){rc[f.ruleId]=(rc[f.ruleId]||0)+1;});
+  var tr=Object.entries(rc).sort(function(a,b){return b[1]-a[1];}).slice(0,6);
+  var mr=tr.length?tr[0][1]:1;
+  var rBars=tr.map(function(e){
+    var rule=e[0];var cnt=e[1];var pct=Math.round((cnt/mr)*100);var sr=rule.split('.').slice(-2).join('.');
+    return '<div class="br"><div class="bl" title="'+esc(rule)+'">'+esc(sr.slice(0,8))+'</div><div class="bt"><div class="bf" style="width:'+pct+'%;background:var(--accent);"></div></div><div class="bc">'+cnt+'</div></div>';
+  }).join('');
+
+  document.getElementById('charts-body').innerHTML=
+    '<div class="dw">'+donut+'<div class="dl">'
+    +'<div class="li"><div class="ld" style="background:#ff7b72"></div>Errors <strong>'+(sev.ERROR||0)+'</strong></div>'
+    +'<div class="li"><div class="ld" style="background:#d29922"></div>Warnings <strong>'+(sev.WARNING||0)+'</strong></div>'
+    +'<div class="li"><div class="ld" style="background:#388bfd"></div>Info <strong>'+(sev.INFO||0)+'</strong></div>'
+    +'</div></div>'
+    +'<div class="vs">Issues by File</div>'+fBars
+    +'<div class="vs">Top Rule Matches</div>'+rBars;
+}
+
+function buildDonut(segs,total){
+  if(!total)return'';
+  var cx=50,cy=50,r=36,sw=10,circ=2*Math.PI*r,off=0;
+  var paths=segs.filter(function(s){return s.v>0;}).map(function(s){
+    var d=s.v/total*circ,g=circ-d;
+    var el='<circle cx="'+cx+'" cy="'+cy+'" r="'+r+'" fill="none" stroke="'+s.c+'" stroke-width="'+sw+'" stroke-dasharray="'+d+' '+g+'" stroke-dashoffset="'+(-off)+'" transform="rotate(-90 '+cx+' '+cy+')" />';
+    off+=d;return el;
+  }).join('');
+  return '<svg viewBox="0 0 100 100" width="76" height="76"><circle cx="50" cy="50" r="36" fill="none" stroke="rgba(255,255,255,0.05)" stroke-width="10"/>'+paths+'<text x="50" y="46" text-anchor="middle" font-size="12" fill="var(--fg)" font-weight="800">'+total+'</text><text x="50" y="58" text-anchor="middle" font-size="7" fill="var(--muted)">threats</text></svg>';
+}
+
+// ── chat ────────────────────────────────────────────────────────────────────
+function chatKey(e){if(e.key==='Enter'&&!e.shiftKey){e.preventDefault();sendChat();}}
+function resize(el){el.style.height='auto';el.style.height=Math.min(el.scrollHeight,80)+'px';}
+function sendChat(){
+  // If user hasn't logged in, show the login gate
+  if (!isUserLoggedIn) {
+    sw('chat'); // make sure chat panel is visible
+    return;
+  }
+  var inp=document.getElementById('cinput');var t=inp.value.trim();if(!t)return;
+  addMsg({role:'user',content:t,timestamp:Date.now()});
+  inp.value='';inp.style.height='';
+  vscode.postMessage({type:'chat',payload:t});
+}
+
+function addMsg(msg){
+  var c=document.getElementById('chat-msgs');var d=document.createElement('div');
+  d.className='cm '+msg.role;
+  d.innerHTML=msg.role==='assistant'?md(msg.content):esc(msg.content);
+  c.appendChild(d);c.scrollTop=c.scrollHeight;
+}
+function showTyping(){
+  removeTyping(); // prevent duplicates
+  var c=document.getElementById('chat-msgs');var d=document.createElement('div');
+  d.className='typing';d.id='typing';
+  d.innerHTML='Analyzing with Groq AI... <div class="td"></div><div class="td"></div><div class="td"></div>';
+  c.appendChild(d);c.scrollTop=c.scrollHeight;
+}
+function removeTyping(){
+  var t=document.getElementById('typing');
+  if(t){t.parentNode.removeChild(t);}
+}
+function jumpToCrash(file, line) {
+  vscode.postMessage({
+    type: 'jumpToCrash',
+    payload: { file: file, line: line }
+  });
+}
+
+
+// ── custom regex ────────────────────────────────────────────────────────────
+var customVuls = [];
+var customIgnores = [];
+var currentRegexTab = 'vul';
+var lastGeneratedRegex = null;
+
+function switchRegexTab(tab) {
+  currentRegexTab = tab;
+  document.getElementById('regex-tab-vul').className = tab === 'vul' ? 'btn bp' : 'btn bs';
+  document.getElementById('regex-tab-ignore').className = tab === 'ignore' ? 'btn bp' : 'btn bs';
+  document.getElementById('regex-tab-ai').className = tab === 'ai' ? 'btn bp' : 'btn bs';
+
+  document.getElementById('regex-sec-vul').style.display = tab === 'vul' ? 'block' : 'none';
+  document.getElementById('regex-sec-ignore').style.display = tab === 'ignore' ? 'block' : 'none';
+  document.getElementById('regex-sec-ai').style.display = tab === 'ai' ? 'block' : 'none';
+}
+
+function renderRegexRules() {
+  var vulList = document.getElementById('vul-rules-list');
+  if (customVuls.length === 0) {
+    vulList.innerHTML = '<div class="empty" style="padding:15px; font-size:11px;">No custom vulnerability rules defined.</div>';
+  } else {
+    var vHtml = '';
+    customVuls.forEach(function(v) {
+      vHtml += '<div class="card" style="margin:0; padding:8px 10px; display:flex; flex-direction:column; gap:4px; background:rgba(255,255,255,0.02); border:1px solid var(--border);">'
+        + '<div style="display:flex; justify-content:space-between; align-items:center;">'
+        + '<span style="font-weight:700; color:var(--accent);">' + esc(v.name || 'Rule') + '</span>'
+        + '<span class="stag ' + v.severity + '" style="font-size:8px;">' + v.severity + '</span>'
+        + '</div>'
+        + '<div style="font-family:var(--mono); font-size:11px; background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; color:#ffab70; word-break:break-all; border:1px solid rgba(255,255,255,0.05);">' + esc(v.pattern) + '</div>'
+        + '<div style="font-size:11px; color:var(--fg);">' + esc(v.message) + '</div>'
+        + '<button class="btn bs" style="padding:2px 8px; align-self:flex-end; font-size:10px; margin-top:4px;" onclick="deleteVulRegex(\'' + v.id + '\')">🗑️ Delete</button>'
+        + '</div>';
+    });
+    vulList.innerHTML = vHtml;
+  }
+
+  var ignoreList = document.getElementById('ignore-rules-list');
+  if (customIgnores.length === 0) {
+    ignoreList.innerHTML = '<div class="empty" style="padding:15px; font-size:11px;">No custom ignore rules defined.</div>';
+  } else {
+    var iHtml = '';
+    customIgnores.forEach(function(i) {
+      iHtml += '<div class="card" style="margin:0; padding:8px 10px; display:flex; flex-direction:column; gap:4px; background:rgba(255,255,255,0.02); border:1px solid var(--border);">'
+        + '<div style="font-weight:700; color:var(--muted);">' + esc(i.name || 'Ignore Rule') + '</div>'
+        + '<div style="font-family:var(--mono); font-size:11px; background:rgba(0,0,0,0.3); padding:2px 6px; border-radius:4px; color:#ffab70; word-break:break-all; border:1px solid rgba(255,255,255,0.05);">' + esc(i.pattern) + '</div>'
+        + '<button class="btn bs" style="padding:2px 8px; align-self:flex-end; font-size:10px; margin-top:4px;" onclick="deleteIgnoreRegex(\'' + i.id + '\')">🗑️ Delete</button>'
+        + '</div>';
+    });
+    ignoreList.innerHTML = iHtml;
+  }
+}
+
+function addVulRegex() {
+  var name = document.getElementById('vul-pat-name').value.trim();
+  var pattern = document.getElementById('vul-pat-regex').value.trim();
+  var message = document.getElementById('vul-pat-msg').value.trim();
+  var severity = document.getElementById('vul-pat-sev').value;
+
+  if (!pattern) {
+    alert('Please enter a valid regular expression pattern.');
+    return;
+  }
+
+  try {
+    new RegExp(pattern);
+  } catch (e) {
+    alert('Invalid regex syntax: ' + e.message);
+    return;
+  }
+
+  var newRule = {
+    id: 'vul_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    name: name || 'Custom Rule',
+    pattern: pattern,
+    message: message || 'Matched custom regex vulnerability.',
+    severity: severity
+  };
+
+  customVuls.push(newRule);
+  saveRegexes();
+  renderRegexRules();
+
+  document.getElementById('vul-pat-name').value = '';
+  document.getElementById('vul-pat-regex').value = '';
+  document.getElementById('vul-pat-msg').value = '';
+}
+
+function addIgnoreRegex() {
+  var name = document.getElementById('ignore-pat-name').value.trim();
+  var pattern = document.getElementById('ignore-pat-regex').value.trim();
+
+  if (!pattern) {
+    alert('Please enter a valid regular expression pattern.');
+    return;
+  }
+
+  try {
+    new RegExp(pattern);
+  } catch (e) {
+    alert('Invalid regex syntax: ' + e.message);
+    return;
+  }
+
+  var newIgnore = {
+    id: 'ignore_' + Date.now() + '_' + Math.random().toString(36).slice(2, 7),
+    name: name || 'Custom Ignore',
+    pattern: pattern
+  };
+
+  customIgnores.push(newIgnore);
+  saveRegexes();
+  renderRegexRules();
+
+  document.getElementById('ignore-pat-name').value = '';
+  document.getElementById('ignore-pat-regex').value = '';
+}
+
+function deleteVulRegex(id) {
+  customVuls = customVuls.filter(function(v) { return v.id !== id; });
+  saveRegexes();
+  renderRegexRules();
+}
+
+function deleteIgnoreRegex(id) {
+  customIgnores = customIgnores.filter(function(i) { return i.id !== id; });
+  saveRegexes();
+  renderRegexRules();
+}
+
+function saveRegexes() {
+  vscode.postMessage({
+    type: 'saveRegexes',
+    payload: { customVuls: customVuls, customIgnores: customIgnores }
+  });
+}
+
+function generateRegexWithAI() {
+  var prompt = document.getElementById('ai-regex-prompt').value.trim();
+  var ruleType = document.getElementById('ai-regex-type').value;
+  var btn = document.getElementById('ai-regex-btn');
+
+  if (!prompt) {
+    alert('Please describe your regex scenario first.');
+    return;
+  }
+
+  btn.disabled = true;
+  btn.textContent = 'Generating...';
+
+  vscode.postMessage({
+    type: 'generateRegex',
+    payload: { prompt: prompt, ruleType: ruleType }
+  });
+}
+
+function applyGeneratedRegex() {
+  if (!lastGeneratedRegex) return;
+  
+  var type = lastGeneratedRegex.ruleType;
+  var regex = lastGeneratedRegex.regex;
+  var desc = lastGeneratedRegex.description;
+
+  if (type === 'vul') {
+    switchRegexTab('vul');
+    document.getElementById('vul-pat-name').value = desc.slice(0, 20);
+    document.getElementById('vul-pat-regex').value = regex;
+    document.getElementById('vul-pat-msg').value = desc;
+  } else {
+    switchRegexTab('ignore');
+    document.getElementById('ignore-pat-name').value = desc.slice(0, 20);
+    document.getElementById('ignore-pat-regex').value = regex;
+  }
+
+  clearGeneratedRegex();
+}
+
+function clearGeneratedRegex() {
+  lastGeneratedRegex = null;
+  document.getElementById('ai-regex-response').style.display = 'none';
+  document.getElementById('ai-regex-prompt').value = '';
+}
+
+// ── helpers ─────────────────────────────────────────────────────────────────
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;');}
+function sIcon(s){return{ERROR:'🔴',WARNING:'🟡',INFO:'🔵',UNKNOWN:'⚪'}[s]||'⚪';}
+function md(t){
+  if(!t)return'';
+  var blk=[];
+  var r=t.replace(/```[\w]*\n?([\s\S]*?)```/g,function(_,c){var i=blk.length;blk.push('<pre>'+esc(c.trim())+'</pre>');return'___B'+i+'___';});
+  r=r.replace(/`([^`]+)`/g,function(_,c){return'<code>'+esc(c)+'</code>';});
+  r=r.replace(/\*\*(.+?)\*\*/g,'<strong>$1</strong>').replace(/\*(.+?)\*/g,'<em>$1</em>')
+    .replace(/\[([^\]]+)\]\((https?:\/\/[^)]+)\)/g,'<a href="$2" target="_blank" style="color:var(--accent)">$1</a>')
+    .replace(/\n\n/g,'</p><p>').replace(/\n/g,'<br>');
+  blk.forEach(function(b,i){r=r.replace('___B'+i+'___',b);});
+  return r;
+}
+</script>
+</body>
+</html>

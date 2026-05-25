@@ -1,0 +1,45 @@
+services:
+  - type: web
+    name: safelens-backend
+    runtime: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: FRONTEND_URL
+        value: https://safelens.vercel.app
+      - key: FRONTEND_URLS
+        value: https://safelens.vercel.app,https://www.safelens.com
+      - key: APP_URL
+        value: https://safelens-backend.onrender.com
+      - key: MONGO_URI
+        sync: false
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: JWT_REFRESH_SECRET
+        generateValue: true
+      - key: JWT_REFRESH_EXPIRES_IN
+        value: 30d
+      - key: SMTP_HOST
+        sync: false
+      - key: SMTP_PORT
+        value: 587
+      - key: SMTP_SECURE
+        value: "false"
+      - key: SMTP_USER
+        sync: false
+      - key: SMTP_PASS
+        sync: false
+      - key: SMTP_FROM
+        value: "SafeLens <no-reply@safelens.com>"
+      - key: OTP_EXPIRY_MINUTES
+        value: 10
+      - key: GROQ_API_KEY
+        sync: false

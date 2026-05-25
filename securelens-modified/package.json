@@ -1,0 +1,204 @@
+{
+  "name": "safelens",
+  "publisher": "Namith011",
+  "displayName": "SafeLens",
+  "license": "MIT",
+  "homepage": "https://safelens.vercel.app",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Namith011/safelens.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Namith011/safelens/issues"
+  },
+  "keywords": [
+    "security",
+    "semgrep",
+    "vulnerability",
+    "ai",
+    "sast"
+  ],
+  "galleryBanner": {
+    "color": "#0f172a",
+    "theme": "dark"
+  },
+  "qna": false,
+  "description": "Scan files and folders with SΛFΞLΞNS, get AI-powered vulnerability explanations via grok ai, inline markers, and a smart sidebar.",
+  "version": "1.0.5",
+  "engines": {
+    "vscode": "^1.85.0"
+  },
+  "enabledApiProposals": [
+    "terminalDataWrite"
+  ],
+  "categories": [
+    "Linters",
+    "Other"
+  ],
+ "activationEvents": [
+    "onCommand:safelens.scanFile",
+    "onCommand:safelens.scanFolder",
+    "onCommand:safelens.clearDiagnostics",
+    "onCommand:safelens.openSidebar",
+    "onCommand:safelens.setApiKey",
+    "onCommand:safelens.deleteApiKey",
+    "onCommand:safelens.setbackendUrl",
+    "onStartupFinished"
+],
+  "main": "./out/extension.js",
+  "icon": "media/c.png",
+  "contributes": {
+    "commands": [
+      {
+      "command": "safelens.setbackendUrl",
+      "title": "SΛFΞLΞNS : Set Backend URL"
+    },
+      {
+        "command": "safelens.scanFile",
+        "title": "SΛFΞLΞNS: Scan Current File",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "safelens.scanFolder",
+        "title": "SΛFΞLΞNS: Scan Workspace Folder",
+        "icon": "$(folder)"
+      },
+      {
+        "command": "safelens.clearDiagnostics",
+        "title": "SΛFΞLΞNS: Clear All Markers",
+        "icon": "$(clear-all)"
+      },
+      {
+        "command": "safelens.openSidebar",
+        "title": "SΛFΞLΞNS: Open Sidebar",
+        "icon": "$(shield)"
+      },
+      {
+        "command": "safelens.setApiKey",
+        "title": "SΛFΞLΞNS: Set API Key"
+      },
+      {
+        "command": "safelens.deleteApiKey",
+        "title": "SΛFΞLΞNS: Delete API Key"
+      } 
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "safelens-sidebar",
+          "title": "SΛFΞLΞNS",
+          "icon": "media/c.png"
+
+        }
+      ]
+    },
+    "views": {
+      "safelens-sidebar": [
+        {
+          "type": "webview",
+          "id": "safelens.sidebarView",
+          "name": "SΛFΞLΞNS"
+        }
+      ]
+    },
+    "menus": {
+      "editor/context": [
+        {
+          "command": "safelens.scanFile",
+          "group": "safelens@1"
+        }
+      ],
+      "explorer/context": [
+        {
+          "command": "safelens.scanFile",
+          "group": "safelens@1"
+        },
+        {
+          "command": "safelens.scanFolder",
+          "group": "safelens@2"
+        }
+      ],
+      "editor/title": [
+        {
+          "command": "safelens.scanFile",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "SafeLens",
+      "properties": {
+        "safelens.semgrepConfig": {
+          "type": "string",
+          "default": "auto",
+          "description": "Semgrep ruleset (e.g. auto, p/javascript, p/owasp-top-ten)"
+        },
+        "safelens.severityFilter": {
+          "type": "string",
+          "enum": [
+            "ALL",
+            "INFO",
+            "WARNING",
+            "ERROR"
+          ],
+          "default": "ALL",
+          "description": "Minimum severity level to show"
+        },
+        "safelens.backendUrl": {
+          "type": "string",
+          "default": "https://safelens-backend.onrender.com/api",
+          "description": "URL of your SafeLens backend API. Production: https://safelens-backend.onrender.com/api. Local development: http://localhost:5000/api. No trailing slash."
+        },
+        "safelens.backendToken": {
+          "type": "string",
+          "default": "",
+          "description": "Extension API key from your AI Security dashboard. Go to Dashboard → Extension Setup → Generate Key, then paste the sk-... key here. Or paste a Groq Cloud key directly (gsk_...)."
+        },
+        "safelens.frontendUrl": {
+          "type": "string",
+          "default": "https://safelens.vercel.app",
+          "description": "URL of your SafeLens web dashboard, used to open the login page. Local development: http://localhost:5173."
+        },
+        "safelens.customRegexVulnerabilities": {
+          "type": "array",
+          "default": [],
+          "description": "Custom regex patterns to match as vulnerabilities.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "pattern": { "type": "string" },
+              "message": { "type": "string" },
+              "severity": { "type": "string", "enum": ["ERROR", "WARNING", "INFO"] }
+            }
+          }
+        },
+        "safelens.customRegexIgnores": {
+          "type": "array",
+          "default": [],
+          "description": "Custom regex patterns to ignore matched vulnerabilities.",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "pattern": { "type": "string" }
+            }
+          }
+        }
+      }
+    }
+  },
+  "scripts": {
+    "vscode:prepublish": "npm run compile",
+    "compile": "tsc -p ./",
+    "watch": "tsc -watch -p ./"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "@types/vscode": "^1.85.0",
+    "typescript": "^5.3.0"
+  },
+  "dependencies": {
+    "axios": "^1.6.0"
+  }
+}

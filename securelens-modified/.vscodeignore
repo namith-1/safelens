@@ -1,0 +1,9 @@
+.vscode/**
+src/**
+test-project/**
+*.vsix
+*.map
+tsconfig.json
+package-lock.json
+k.md
+**/test.js

@@ -1,0 +1,18 @@
+# SafeLens .scanignore
+# Files and directories to exclude from security scanning
+# (These are the extension's own UI/build files, not user code)
+
+# Extension own files
+media/sidebar.html
+media/*.yaml
+media/*.png
+media/*.svg
+out/
+*.vsix
+
+# Common noise directories
+node_modules/
+.git/
+dist/
+build/
+coverage/
