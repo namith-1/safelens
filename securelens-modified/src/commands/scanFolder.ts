@@ -3,7 +3,6 @@ import * as path from 'path';
 import { SemgrepService } from '../services/semgrepService';
 import { DiagnosticsService } from '../services/diagnosticsService';
 import { SidebarProvider } from '../webview/sidebarProvider';
-import { HistoryService } from '../services/historyService';
 
 export class ScanFolderCommand {
   constructor(
@@ -60,9 +59,6 @@ export class ScanFolderCommand {
           this.diagnosticsService.applyFindings(scanResult);
           this.sidebar.showScanResult(scanResult);
 
-          // Record scan history and print simplified terminal summary
-          const historyService = new HistoryService();
-          await historyService.recordScan(scanResult, targetPath);
         } catch (err: unknown) {
           scanError = err;
         }

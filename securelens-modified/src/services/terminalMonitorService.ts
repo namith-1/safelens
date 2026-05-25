@@ -452,12 +452,7 @@ export class TerminalMonitorService {
     // Don't show Output panel automatically as requested: "show in detail in sidebar... not in output"
     // channel.show(true);
 
-    // C. Save exception history locally in .safelens/history (Disabled: "dont save all errors")
-    // if (workspaceRoot) {
-    //   await this.saveExceptionToHistory(exc, workspaceRoot);
-    // }
-
-    // D. Open sidebar and send exception details to sidebar webview
+    // Open sidebar and send exception details to sidebar webview
     try {
       // Execute command to reveal the SafeLens sidebar view
       await vscode.commands.executeCommand('workbench.view.extension.safelens-sidebar');
@@ -548,61 +543,5 @@ export class TerminalMonitorService {
       }
     });
     return lines;
-  }
-
-  private static async saveExceptionToHistory(exc: RuntimeException, workspaceRoot: string): Promise<void> {
-    const historyDir = path.join(workspaceRoot, '.safelens', 'history');
-    if (!fs.existsSync(historyDir)) {
-      fs.mkdirSync(historyDir, { recursive: true });
-    }
-
-    const relPath = path.relative(workspaceRoot, exc.origin.file);
-    if (relPath.includes('node_modules')) return;
-
-    const safeName = relPath.replace(/[\/\\]/g, '_').replace(/:/g, '') + '_history.json';
-    const historyFilePath = path.join(historyDir, safeName);
-
-    let historyObj: {
-      filePath: string;
-      lastUpdated: string;
-      history: any[];
-    } = {
-      filePath: relPath,
-      lastUpdated: '',
-      history: []
-    };
-
-    if (fs.existsSync(historyFilePath)) {
-      try {
-        const raw = fs.readFileSync(historyFilePath, 'utf8');
-        historyObj = JSON.parse(raw);
-      } catch {}
-    }
-
-    // Append exception entry
-    const entry = {
-      timestamp: new Date().toISOString(),
-      type: 'RUNTIME_EXCEPTION',
-      errorType: exc.type,
-      message: exc.message,
-      origin: {
-        line: exc.origin.line,
-        functionName: exc.origin.functionName
-      },
-      propagation: exc.propagation.slice(0, 10).map(p => ({
-        file: path.relative(workspaceRoot, p.file),
-        line: p.line,
-        functionName: p.functionName
-      }))
-    };
-
-    historyObj.lastUpdated = entry.timestamp;
-    historyObj.history.unshift(entry);
-
-    if (historyObj.history.length > 50) {
-      historyObj.history = historyObj.history.slice(0, 50);
-    }
-
-    fs.writeFileSync(historyFilePath, JSON.stringify(historyObj, null, 2), 'utf8');
   }
 }

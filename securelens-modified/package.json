@@ -24,7 +24,7 @@
   },
   "qna": false,
   "description": "Scan files and folders with SafeLens, get AI-powered vulnerability explanations, inline markers, and a smart security sidebar.",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "engines": {
     "vscode": "^1.85.0"
   },

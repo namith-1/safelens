@@ -36,7 +36,6 @@ Object.defineProperty(exports, "__esModule", { value: true });
 exports.ScanFolderCommand = void 0;
 const vscode = __importStar(require("vscode"));
 const path = __importStar(require("path"));
-const historyService_1 = require("../services/historyService");
 class ScanFolderCommand {
     constructor(semgrepService, diagnosticsService, sidebar, extensionPath) {
         this.semgrepService = semgrepService;
@@ -86,9 +85,6 @@ class ScanFolderCommand {
                 progress.report({ message: 'Done!' });
                 this.diagnosticsService.applyFindings(scanResult);
                 this.sidebar.showScanResult(scanResult);
-                // Record scan history and print simplified terminal summary
-                const historyService = new historyService_1.HistoryService();
-                await historyService.recordScan(scanResult, targetPath);
             }
             catch (err) {
                 scanError = err;

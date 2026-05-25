@@ -2,7 +2,6 @@ import * as vscode from 'vscode';
 import { SemgrepService } from '../services/semgrepService';
 import { DiagnosticsService } from '../services/diagnosticsService';
 import { SidebarProvider } from '../webview/sidebarProvider';
-import { HistoryService } from '../services/historyService';
 
 export class ScanFileCommand {
   constructor(
@@ -53,9 +52,6 @@ export class ScanFileCommand {
           this.diagnosticsService.applyFindings(scanResult);
           this.sidebar.showScanResult(scanResult);
 
-          // Record scan history and print simplified terminal summary
-          const historyService = new HistoryService();
-          await historyService.recordScan(scanResult, filePath);
           console.log('Scan results:', scanResult);
           // sending the resutls to the backend is now handled in the semgrepService after the scan is complete, instead of in the sidebarProvider after displaying the results. This allows us to keep the scanning logic and backend communication logic together in the semgrepService, while the sidebarProvider focuses solely on displaying results and interacting with the user interface.
           this.semgrepService.sendResultsToBackend(scanResult).then(() => {

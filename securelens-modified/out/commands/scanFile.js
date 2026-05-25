@@ -35,7 +35,6 @@ var __importStar = (this && this.__importStar) || (function () {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.ScanFileCommand = void 0;
 const vscode = __importStar(require("vscode"));
-const historyService_1 = require("../services/historyService");
 class ScanFileCommand {
     constructor(semgrepService, diagnosticsService, sidebar, extensionPath) {
         this.semgrepService = semgrepService;
@@ -76,9 +75,6 @@ class ScanFileCommand {
                 progress.report({ message: 'Done!' });
                 this.diagnosticsService.applyFindings(scanResult);
                 this.sidebar.showScanResult(scanResult);
-                // Record scan history and print simplified terminal summary
-                const historyService = new historyService_1.HistoryService();
-                await historyService.recordScan(scanResult, filePath);
                 console.log('Scan results:', scanResult);
                 // sending the resutls to the backend is now handled in the semgrepService after the scan is complete, instead of in the sidebarProvider after displaying the results. This allows us to keep the scanning logic and backend communication logic together in the semgrepService, while the sidebarProvider focuses solely on displaying results and interacting with the user interface.
                 this.semgrepService.sendResultsToBackend(scanResult).then(() => {
