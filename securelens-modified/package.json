@@ -3,7 +3,7 @@
   "publisher": "Namith011",
   "displayName": "SafeLens",
   "license": "MIT",
-  "homepage": "https://safelens.vercel.app",
+  "homepage": "https://safelens-three.vercel.app",
   "repository": {
     "type": "git",
     "url": "https://github.com/Namith011/safelens.git"
@@ -156,7 +156,7 @@
         },
         "safelens.frontendUrl": {
           "type": "string",
-          "default": "https://safelens.vercel.app",
+          "default": "https://safelens-three.vercel.app",
           "description": "URL of your SafeLens web dashboard, used to open the login page. Local development: http://localhost:5173."
         },
         "safelens.customRegexVulnerabilities": {

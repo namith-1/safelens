@@ -19,23 +19,11 @@ const configuredOrigins = (process.env.FRONTEND_URLS || FRONTEND_URL)
 
 const allowedOrigins = Array.from(new Set([...configuredOrigins, FRONTEND_URL, 'https://www.safelens.com']));
 
-const isAllowedOrigin = (origin?: string): boolean => {
-  if (!origin) return true;
-
-  try {
-    const { hostname } = new URL(origin);
-    return allowedOrigins.includes(origin) || hostname === 'vercel.app' || hostname.endsWith('.vercel.app');
-  } catch {
-    return false;
-  }
-};
 
 // ─── Web dashboard CORS ───────────────────────────────────────────────────────
 // Strict — only the configured frontend origin is allowed, with credentials.
 export const webCors = cors({
-  origin: (origin, callback) => {
-    callback(null, isAllowedOrigin(origin));
-  },
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization'],
@@ -56,10 +44,9 @@ export const extensionCors = cors({
 // Used in index.ts as the default — applies webCors to everything,
 // then individual routers override with extensionCors where needed.
 export const defaultCorsOptions: CorsOptions = {
-  origin: (origin, callback) => {
-    callback(null, isAllowedOrigin(origin));
-  },
+  origin: allowedOrigins,
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-API-Key'],
 };
+

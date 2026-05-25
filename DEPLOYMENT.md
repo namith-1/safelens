@@ -2,7 +2,7 @@
 
 Production URLs configured in this repo:
 
-- Frontend: https://safelens.vercel.app
+- Frontend: https://safelens-three.vercel.app
 - Backend: https://safelens-backend.onrender.com
 - Backend API prefix: https://safelens-backend.onrender.com/api
 - VS Code Marketplace publisher: Namith011

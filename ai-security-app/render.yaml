@@ -12,9 +12,9 @@ services:
       - key: NODE_ENV
         value: production
       - key: FRONTEND_URL
-        value: https://safelens.vercel.app
+        value: https://safelens-three.vercel.app
       - key: FRONTEND_URLS
-        value: https://safelens.vercel.app,https://www.safelens.com
+        value: https://safelens-three.vercel.app,https://www.safelens.com
       - key: APP_URL
         value: https://safelens-backend.onrender.com
       - key: MONGO_URI
