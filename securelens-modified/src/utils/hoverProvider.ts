@@ -52,3 +52,4 @@ export class HoverProvider implements vscode.HoverProvider {
     return new vscode.Hover(md);
   }
 }
+

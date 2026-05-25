@@ -34,3 +34,4 @@ SafeLens brings AI-powered security review directly into VS Code. It scans files
 Dashboard: https://safelens-three.vercel.app
 
 Backend API: https://safelens-backend.onrender.com/api
+

@@ -51,7 +51,7 @@ export class DiagnosticsService {
 
     const range    = new vscode.Range(new vscode.Position(startLine, startCol), new vscode.Position(endLine, endCol));
     const severity = SEVERITY_MAP[f.severity] ?? vscode.DiagnosticSeverity.Warning;
-    const diag     = new vscode.Diagnostic(range, `[SΛFΞLΞNS] ${f.message}`, severity);
+    const diag     = new vscode.Diagnostic(range, `[SafeLens] ${f.message}`, severity);
 
     diag.code = { value: f.ruleId, target: vscode.Uri.parse(`https://semgrep.dev/r/${f.ruleId}`) };
     diag.source = 'SafeLens';
@@ -68,3 +68,4 @@ export class DiagnosticsService {
     return diag;
   }
 }
+

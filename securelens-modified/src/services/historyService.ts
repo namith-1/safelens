@@ -10,3 +10,4 @@ export class HistoryService {
     return this.outputChannel;
   }
 }
+

@@ -276,7 +276,7 @@ const fp = `${baseFp}:${idx}`;
       await aiService.post('/api/scans/save-results', { results: result });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : String(err);
-      console.error(`SΛFΞLΞNS: Failed to send scan results to backend. ${msg}`);
+      console.error(`SafeLens: Failed to send scan results to backend. ${msg}`);
     }
   };
 
@@ -473,3 +473,4 @@ const fp = `${baseFp}:${idx}`;
     };
   }
 }
+

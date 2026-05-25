@@ -86,7 +86,7 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
         this.post({ type: 'summaryError', payload: err instanceof Error ? err.message : String(err) });
       }
     } else {
-      this.post({ type: 'summary', payload: '⚠️ SΛFΞLΞNS returned 0 findings. Rules may still be downloading — try scanning again.' });
+      this.post({ type: 'summary', payload: '⚠️ SafeLens returned 0 findings. Rules may still be downloading — try scanning again.' });
     }
   }
 
@@ -327,3 +327,4 @@ export class SidebarProvider implements vscode.WebviewViewProvider {
     this.view?.webview.postMessage(message);
   }
 }
+

@@ -24,7 +24,7 @@
   },
   "qna": false,
   "description": "Scan files and folders with SafeLens, get AI-powered vulnerability explanations, inline markers, and a smart security sidebar.",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "engines": {
     "vscode": "^1.85.0"
   },
@@ -51,42 +51,42 @@
     "commands": [
       {
       "command": "safelens.setbackendUrl",
-      "title": "SΛFΞLΞNS : Set Backend URL"
+      "title": "SafeLens: Set Backend URL"
     },
       {
         "command": "safelens.scanFile",
-        "title": "SΛFΞLΞNS: Scan Current File",
+        "title": "SafeLens: Scan Current File",
         "icon": "$(shield)"
       },
       {
         "command": "safelens.scanFolder",
-        "title": "SΛFΞLΞNS: Scan Workspace Folder",
+        "title": "SafeLens: Scan Workspace Folder",
         "icon": "$(folder)"
       },
       {
         "command": "safelens.clearDiagnostics",
-        "title": "SΛFΞLΞNS: Clear All Markers",
+        "title": "SafeLens: Clear All Markers",
         "icon": "$(clear-all)"
       },
       {
         "command": "safelens.openSidebar",
-        "title": "SΛFΞLΞNS: Open Sidebar",
+        "title": "SafeLens: Open Sidebar",
         "icon": "$(shield)"
       },
       {
         "command": "safelens.setApiKey",
-        "title": "SΛFΞLΞNS: Set API Key"
+        "title": "SafeLens: Set API Key"
       },
       {
         "command": "safelens.deleteApiKey",
-        "title": "SΛFΞLΞNS: Delete API Key"
+        "title": "SafeLens: Delete API Key"
       } 
     ],
     "viewsContainers": {
       "activitybar": [
         {
           "id": "safelens-sidebar",
-          "title": "SΛFΞLΞNS",
+          "title": "SafeLens",
           "icon": "media/c.png"
 
         }
@@ -97,7 +97,7 @@
         {
           "type": "webview",
           "id": "safelens.sidebarView",
-          "name": "SΛFΞLΞNS"
+          "name": "SafeLens"
         }
       ]
     },
@@ -202,3 +202,4 @@
     "axios": "^1.6.0"
   }
 }
+

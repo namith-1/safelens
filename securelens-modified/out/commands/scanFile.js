@@ -45,14 +45,14 @@ class ScanFileCommand {
     async execute() {
         const editor = vscode.window.activeTextEditor;
         if (!editor) {
-            vscode.window.showWarningMessage('SΛFΞLΞNS: Open a file in the editor first.');
+            vscode.window.showWarningMessage('SafeLens: Open a file in the editor first.');
             return;
         }
         await this.executeForDocument(editor.document);
     }
     async executeForDocument(doc) {
         if (doc.isUntitled) {
-            vscode.window.showWarningMessage('SΛFΞLΞNS: Save the file before scanning.');
+            vscode.window.showWarningMessage('SafeLens: Save the file before scanning.');
             return;
         }
         const filePath = doc.uri.fsPath;
@@ -60,7 +60,7 @@ class ScanFileCommand {
         let scanError = null;
         await vscode.window.withProgress({
             location: vscode.ProgressLocation.Notification,
-            title: `SΛFΞLΞNS: Scanning ${vscode.workspace.asRelativePath(filePath)}…`,
+            title: `SafeLens: Scanning ${vscode.workspace.asRelativePath(filePath)}…`,
             cancellable: false,
         }, async (progress) => {
             this.sidebar.showScanLoading(filePath, 'file');
@@ -81,7 +81,7 @@ class ScanFileCommand {
                     console.log('Scan results successfully sent to backend.');
                 }).catch(err => {
                     const msg = err instanceof Error ? err.message : String(err);
-                    vscode.window.showErrorMessage(`SΛFΞLΞNS: Failed to send scan results to backend. ${msg}`);
+                    vscode.window.showErrorMessage(`SafeLens: Failed to send scan results to backend. ${msg}`);
                 });
             }
             catch (err) {
@@ -90,17 +90,17 @@ class ScanFileCommand {
         });
         if (scanError) {
             const msg = scanError instanceof Error ? scanError.message : String(scanError);
-            vscode.window.showErrorMessage(`SΛFΞLΞNS: ${msg}`);
+            vscode.window.showErrorMessage(`SafeLens: ${msg}`);
             this.sidebar.showError(msg);
             return;
         }
         if (scanResult) {
             const { totalFindings } = scanResult.summary;
             if (totalFindings === 0) {
-                vscode.window.showInformationMessage('SΛFΞLΞNS: No issues found!');
+                vscode.window.showInformationMessage('SafeLens: No issues found!');
             }
             else {
-                const action = await vscode.window.showWarningMessage(`🔍 SΛFΞLΞNS: ${totalFindings} issue(s) found.`, 'Open Sidebar');
+                const action = await vscode.window.showWarningMessage(`🔍 SafeLens: ${totalFindings} issue(s) found.`, 'Open Sidebar');
                 if (action === 'Open Sidebar') {
                     vscode.commands.executeCommand('workbench.view.extension.safelens-sidebar');
                 }

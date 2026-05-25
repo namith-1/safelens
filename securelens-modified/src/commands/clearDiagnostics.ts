@@ -11,6 +11,7 @@ export class ClearDiagnosticsCommand {
   execute(): void {
     this.diagnosticsService.clear();
     this.sidebar.showCleared();
-    vscode.window.showInformationMessage('SΛFΞLΞNS: All markers cleared.');
+    vscode.window.showInformationMessage('SafeLens: All markers cleared.');
   }
 }
+

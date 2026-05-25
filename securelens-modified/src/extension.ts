@@ -177,11 +177,11 @@ async function setupSemgrep(
     return false;
   }
 
-  progress.report({ message: 'Installing SΛFΞLΞNS (this may take a minute)…' });
+  progress.report({ message: 'Installing SafeLens (this may take a minute)…' });
   try {
     await installSemgrepInVenv();
   } catch (err) {
-    vscode.window.showErrorMessage(`Failed to install SΛFΞLΞNS: ${err}`);
+    vscode.window.showErrorMessage(`Failed to install SafeLens: ${err}`);
     return false;
   }
 
@@ -189,7 +189,7 @@ async function setupSemgrep(
   const ok = await validateSemgrep();
   if (!ok) {
     vscode.window.showErrorMessage(
-      'SΛFΞLΞNS installed but failed to run. Please check your Python installation.'
+      'SafeLens installed but failed to run. Please check your Python installation.'
     );
     return false;
   }
@@ -215,12 +215,12 @@ export async function activate(context: vscode.ExtensionContext) {
         const token = params.get('token');
         if (token) {
           await context.secrets.store('safelensApiKey', token);
-          vscode.window.showInformationMessage('SΛFΞLΞNS: API Key successfully synchronized from website!');
+          vscode.window.showInformationMessage('SafeLens: API Key successfully synchronized from website!');
           if (sidebarProvider) {
             sidebarProvider.sendAuthState();
           }
         } else {
-          vscode.window.showErrorMessage('SΛFΞLΞNS: Token parameter was missing in sync link.');
+          vscode.window.showErrorMessage('SafeLens: Token parameter was missing in sync link.');
         }
       }
     }
@@ -235,14 +235,14 @@ export async function activate(context: vscode.ExtensionContext) {
     'safelens.setApiKey',
     async () => {
       const apiKey = await vscode.window.showInputBox({
-        prompt: 'Enter your SΛFΞLΞNS API Key',
+        prompt: 'Enter your SafeLens API Key',
         ignoreFocusOut: true,
         password: true,
       });
       if (apiKey) {
         await context.secrets.store('safelensApiKey', apiKey);
         vscode.window.showInformationMessage(
-          'SΛFΞLΞNS API Key saved successfully!'
+          'SafeLens API Key saved successfully!'
         );
         if (sidebarProvider) {
           sidebarProvider.sendAuthState();
@@ -262,7 +262,7 @@ export async function activate(context: vscode.ExtensionContext) {
       if (backendUrl) {
         await vscode.workspace.getConfiguration('safelens').update('backendUrl', backendUrl, vscode.ConfigurationTarget.Global);
         vscode.window.showInformationMessage(
-          'SΛFΞLΞNS Backend URL saved successfully!'
+          'SafeLens Backend URL saved successfully!'
         );
       }
     }
@@ -274,7 +274,7 @@ export async function activate(context: vscode.ExtensionContext) {
     async () => {
       await context.secrets.delete('safelensApiKey');
       vscode.window.showInformationMessage(
-        'SΛFΞLΞNS API Key deleted successfully!'
+        'SafeLens API Key deleted successfully!'
       );
       if (sidebarProvider) {
         sidebarProvider.sendAuthState();
@@ -291,7 +291,7 @@ export async function activate(context: vscode.ExtensionContext) {
     injectPathIntoProcess();
   } else {
     const choice = await vscode.window.showWarningMessage(
-      'SΛFΞLΞNS(kit) is required by SΛFΞLΞNS. Install it now?',
+      'SafeLens kit is required by SafeLens. Install it now?',
       'Install',
       'Not Now'
     );
@@ -308,7 +308,7 @@ export async function activate(context: vscode.ExtensionContext) {
 
       if (success) {
         vscode.window.showInformationMessage(
-          `SΛFΞLΞNS(kit) installed successfully`
+          'SafeLens kit installed successfully'
         );
       }
     }
@@ -398,3 +398,4 @@ export async function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() {}
+

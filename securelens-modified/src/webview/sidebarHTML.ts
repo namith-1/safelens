@@ -14,3 +14,4 @@ export function getSidebarHTML(
   const htmlPath = path.join(extensionUri.fsPath, 'media', 'sidebar.html');
   return fs.readFileSync(htmlPath, 'utf8');
 }
+

@@ -15,7 +15,7 @@ export class ScanFolderCommand {
   async execute(): Promise<void> {
     const folders = vscode.workspace.workspaceFolders;
     if (!folders || folders.length === 0) {
-      vscode.window.showWarningMessage('SΛFΞLΞNS: No workspace folder open.');
+      vscode.window.showWarningMessage('SafeLens: No workspace folder open.');
       return;
     }
 
@@ -53,7 +53,7 @@ export class ScanFolderCommand {
             console.log('Scan results successfully sent to backend.');
           }).catch(err => {
             const msg = err instanceof Error ? err.message : String(err);
-            vscode.window.showErrorMessage(`SΛFΞLΞNS: Failed to send scan results to backend. ${msg}`);
+            vscode.window.showErrorMessage(`SafeLens: Failed to send scan results to backend. ${msg}`);
           });
           progress.report({ message: 'Done!' });
           this.diagnosticsService.applyFindings(scanResult);
@@ -67,7 +67,7 @@ export class ScanFolderCommand {
 
     if (scanError) {
       const msg = scanError instanceof Error ? scanError.message : String(scanError);
-      vscode.window.showErrorMessage(`SΛFΞLΞNS: ${msg}`);
+      vscode.window.showErrorMessage(`SafeLens: ${msg}`);
       this.sidebar.showError(msg);
       return;
     }
@@ -75,10 +75,10 @@ export class ScanFolderCommand {
     if (scanResult) {
       const { totalFindings, filesWithFindings } = scanResult.summary;
       if (totalFindings === 0) {
-        vscode.window.showInformationMessage('✅ SΛFΞLΞNS: No issues found!');
+        vscode.window.showInformationMessage('✅ SafeLens: No issues found!');
       } else {
         const action = await vscode.window.showWarningMessage(
-          `🔍 SΛFΞLΞNS: ${totalFindings} issue(s) across ${filesWithFindings} file(s).`, 'Open Sidebar'
+          `🔍 SafeLens: ${totalFindings} issue(s) across ${filesWithFindings} file(s).`, 'Open Sidebar'
         );
         if (action === 'Open Sidebar') {
           vscode.commands.executeCommand('workbench.view.extension.safelens-sidebar');
@@ -87,3 +87,4 @@ export class ScanFolderCommand {
     }
   }
 }
+

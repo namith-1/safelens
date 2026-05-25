@@ -106,7 +106,7 @@ class SidebarProvider {
             }
         }
         else {
-            this.post({ type: 'summary', payload: '⚠️ SΛFΞLΞNS returned 0 findings. Rules may still be downloading — try scanning again.' });
+            this.post({ type: 'summary', payload: '⚠️ SafeLens returned 0 findings. Rules may still be downloading — try scanning again.' });
         }
     }
     // ── Called from hover "Open Full AI Details" click ────────────────────────────
