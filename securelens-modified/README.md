@@ -1,44 +1,36 @@
-# 🛡️ SΛFΞLΞNS — Your AI Security Assistant
+# SafeLens - Your AI Security Assistant
 
-**SΛFΞLΞNS** brings the combined power of AI and specialized open-source security tools and ours speclized once directly into your VS Code editor. It doesn't just find vulnerabilities—it explains them, shows you how they could be exploited, and helps you fix them through an interactive AI chat.
+SafeLens brings AI-powered security review directly into VS Code. It scans files and workspaces, highlights vulnerable lines, explains findings, and helps you fix issues through an interactive AI chat.
 
----
+## Key Features
 
-## ✨ Key Features
+* **Inline markers:** Identify vulnerable lines with severity-based editor diagnostics.
+* **AI explanations:** Get practical explanations, attack scenarios, and fix guidance.
+* **Security sidebar:** Review findings, summaries, charts, and remediation details.
+* **Interactive chat:** Ask questions about scan results and get focused help.
 
-* **Inline Markers:** Identify vulnerable lines instantly with color-coded squiggly underlines based on severity.
-* **AI Hover Tooltips:** Get brief, AI-generated explanations and real-world attack scenarios just by hovering over code.
-* **Comprehensive Sidebar:** Access a full list of findings, detailed AI breakdowns, and visual data representations.
-* **Interactive Chat Assistant:** Ask specific questions about your code's vulnerabilities and get instant guidance.
+## Getting Started
 
----
+1. Install the extension from the VS Code Marketplace.
+2. Visit [SafeLens Dashboard](https://safelens-three.vercel.app) and log in.
+3. Generate an extension API key from the dashboard.
+4. In VS Code, open the Command Palette and run **SafeLens: Set API Key**.
+5. Paste your generated key and start scanning.
 
-## 🚀 Getting Started
-
-Follow these steps to activate your security shield:
-
-1.  **Install Dependencies:** Ensure security engines (like Semgrep) are installed on your system path.
-2.  **Get Your Key:** Visit [panclaws.com](https://www.panclaws.com/) and log in to your account.
-3.  **Generate API Key:** Navigate to the **Generate API Key** section and copy your unique key.
-4.  **Configure VS Code:** * Press `Ctrl+Shift+P` (or `Cmd+Shift+P` on Mac).
-    * Type **SΛFΞLΞNS: Setup API Key**.
-    * Paste your key and hit **Enter**.
-
----
-
-## 🛠️ Usage
+## Usage
 
 | Action | Instruction |
 | :--- | :--- |
-| **Scan Current File** | `Ctrl+Shift+P` → **SΛFΞLΞNS: Scan Current File** (or click 📄 in sidebar) |
-| **Scan Workspace** | `Ctrl+Shift+P` → **SΛFΞLΞNS: Scan Workspace Folder** (or click 📁) |
-| **View Findings** | Click the **SΛFΞLΞNS** icon in the Activity Bar |
-| **See Inline Explanation**| Hover over any underlined line in your editor |
-| **Full Detail & Fix** | Click a finding in sidebar → **Issues** tab |
-| **Chat with AI** | Use the 💬 **Chat** tab in the sidebar |
-| **View Analytics** | Use the 📊 **Charts** tab in the sidebar |
-| **Clear All Markers** | `Ctrl+Shift+P` → **SΛFΞLΞNS: Clear All Markers** |
+| Scan current file | `Ctrl+Shift+P` -> **SafeLens: Scan Current File** |
+| Scan workspace | `Ctrl+Shift+P` -> **SafeLens: Scan Workspace Folder** |
+| View findings | Click the SafeLens icon in the Activity Bar |
+| See inline explanation | Hover over any marked line in your editor |
+| Full detail and fix | Click a finding in the SafeLens sidebar |
+| Chat with AI | Use the Chat tab in the sidebar |
+| Clear markers | `Ctrl+Shift+P` -> **SafeLens: Clear All Markers** |
 
----
+## Production URLs
 
-## 📁 Development & Support
+Dashboard: https://safelens-three.vercel.app
+
+Backend API: https://safelens-backend.onrender.com/api

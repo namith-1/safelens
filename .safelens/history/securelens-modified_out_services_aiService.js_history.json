@@ -1,0 +1,19 @@
+{
+  "filePath": "securelens-modified\\out\\services\\aiService.js",
+  "lastUpdated": "2026-05-25T11:17:57.366Z",
+  "history": [
+    {
+      "timestamp": "2026-05-25T11:17:57.366Z",
+      "findingsCount": 1,
+      "findings": [
+        {
+          "ruleId": "c.Users.likhi..vscode.extensions.namith011.safelens-1.0.5.media.ssrf-http-module",
+          "severity": "ERROR",
+          "message": "SSRF: HTTP request with variable URL. If user-controlled, attacker probes internal network.",
+          "line": 138,
+          "codeSnippet": "requires login"
+        }
+      ]
+    }
+  ]
+}

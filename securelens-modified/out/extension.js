@@ -237,7 +237,7 @@ async function activate(context) {
     });
     const setbackendUrl = vscode.commands.registerCommand('safelens.setbackendUrl', async () => {
         const backendUrl = await vscode.window.showInputBox({
-            prompt: 'Enter your SafeLens Backend URL (e.g. https://pointer.panclaws.com/api)',
+            prompt: 'Enter your SafeLens Backend URL (e.g. https://safelens-backend.onrender.com/api)',
             ignoreFocusOut: true,
             value: vscode.workspace.getConfiguration('safelens').get('backendUrl') || '',
         });

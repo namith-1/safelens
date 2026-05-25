@@ -1,0 +1,19 @@
+{
+  "filePath": "..\\..\\AppData\\Local\\Programs\\Microsoft VS Code\\ai-security-app\\backend\\src\\models\\User.ts",
+  "lastUpdated": "2026-05-25T11:17:57.403Z",
+  "history": [
+    {
+      "timestamp": "2026-05-25T11:17:57.403Z",
+      "findingsCount": 1,
+      "findings": [
+        {
+          "ruleId": "custom-regex:vul_1779698881597_f1oem",
+          "severity": "WARNING",
+          "message": "matches hardcoded password assignments",
+          "line": 24,
+          "codeSnippet": "this.password = await bcrypt.hash(this.password, salt);"
+        }
+      ]
+    }
+  ]
+}

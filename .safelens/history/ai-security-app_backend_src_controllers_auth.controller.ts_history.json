@@ -1,0 +1,75 @@
+{
+  "filePath": "ai-security-app\\backend\\src\\controllers\\auth.controller.ts",
+  "lastUpdated": "2026-05-25T11:17:57.391Z",
+  "history": [
+    {
+      "timestamp": "2026-05-25T11:17:57.391Z",
+      "findingsCount": 9,
+      "findings": [
+        {
+          "ruleId": "c.Users.likhi..vscode.extensions.namith011.safelens-1.0.5.media.full-object-response",
+          "severity": "WARNING",
+          "message": "Possible Data Exposure: sending entire object may include password or token fields. Explicitly select safe fields.",
+          "line": 110,
+          "codeSnippet": "requires login"
+        },
+        {
+          "ruleId": "c.Users.likhi..vscode.extensions.namith011.safelens-1.0.5.media.full-object-response",
+          "severity": "WARNING",
+          "message": "Possible Data Exposure: sending entire object may include password or token fields. Explicitly select safe fields.",
+          "line": 156,
+          "codeSnippet": "requires login"
+        },
+        {
+          "ruleId": "c.Users.likhi..vscode.extensions.namith011.safelens-1.0.5.media.full-object-response",
+          "severity": "WARNING",
+          "message": "Possible Data Exposure: sending entire object may include password or token fields. Explicitly select safe fields.",
+          "line": 187,
+          "codeSnippet": "requires login"
+        },
+        {
+          "ruleId": "c.Users.likhi..vscode.extensions.namith011.safelens-1.0.5.media.full-object-response",
+          "severity": "WARNING",
+          "message": "Possible Data Exposure: sending entire object may include password or token fields. Explicitly select safe fields.",
+          "line": 199,
+          "codeSnippet": "requires login"
+        },
+        {
+          "ruleId": "c.Users.likhi..vscode.extensions.namith011.safelens-1.0.5.media.full-object-response",
+          "severity": "WARNING",
+          "message": "Possible Data Exposure: sending entire object may include password or token fields. Explicitly select safe fields.",
+          "line": 212,
+          "codeSnippet": "requires login"
+        },
+        {
+          "ruleId": "c.Users.likhi..vscode.extensions.namith011.safelens-1.0.5.media.full-object-response",
+          "severity": "WARNING",
+          "message": "Possible Data Exposure: sending entire object may include password or token fields. Explicitly select safe fields.",
+          "line": 227,
+          "codeSnippet": "requires login"
+        },
+        {
+          "ruleId": "c.Users.likhi..vscode.extensions.namith011.safelens-1.0.5.media.full-object-response",
+          "severity": "WARNING",
+          "message": "Possible Data Exposure: sending entire object may include password or token fields. Explicitly select safe fields.",
+          "line": 232,
+          "codeSnippet": "requires login"
+        },
+        {
+          "ruleId": "c.Users.likhi..vscode.extensions.namith011.safelens-1.0.5.media.full-object-response",
+          "severity": "WARNING",
+          "message": "Possible Data Exposure: sending entire object may include password or token fields. Explicitly select safe fields.",
+          "line": 258,
+          "codeSnippet": "requires login"
+        },
+        {
+          "ruleId": "c.Users.likhi..vscode.extensions.namith011.safelens-1.0.5.media.full-object-response",
+          "severity": "WARNING",
+          "message": "Possible Data Exposure: sending entire object may include password or token fields. Explicitly select safe fields.",
+          "line": 268,
+          "codeSnippet": "requires login"
+        }
+      ]
+    }
+  ]
+}
