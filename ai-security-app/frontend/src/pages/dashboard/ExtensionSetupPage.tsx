@@ -189,7 +189,7 @@ export const ExtensionSetupPage = () => {
           <div className="flex flex-col sm:flex-row gap-3 pt-2">
             <button
               onClick={() => {
-                window.location.href = `vscode://safelens.safelens/auth?token=${encodeURIComponent(newKeyValue)}`;
+                window.location.href = `vscode://Namith011.safelens/auth?token=${encodeURIComponent(newKeyValue)}`;
                 toast.success('Syncing key to VS Code...');
               }}
               className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium text-xs flex items-center justify-center gap-2 shadow transition-colors"
